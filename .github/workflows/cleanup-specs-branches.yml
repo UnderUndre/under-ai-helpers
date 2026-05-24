@@ -1,0 +1,20 @@
+name: Cleanup specs/* branches
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    name: Delete merged specs/* branch
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'specs/')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Delete specs/* branch
+        run: |
+          branch="${{ github.event.pull_request.head.ref }}"
+          git push origin --delete "$branch" || echo "Branch already deleted"
+          echo "Deleted branch: $branch"

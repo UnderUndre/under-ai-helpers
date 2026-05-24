@@ -1,116 +1,54 @@
-/**
- * `helpers doctor` command handler.
- * Verify lock integrity and file hashes.
- */
-
 import { defineCommand } from "citty";
-import consola from "consola";
-import { readFile } from "node:fs/promises";
-import { join } from "pathe";
-
-import { ExitCode, FileKind } from "../types/common.js";
-import { readLock, writeLock, validateLock } from "../core/lock.js";
-import { renderedHash, canonicalHash, slotsHash } from "../core/hash.js";
-import { parseSlots } from "../core/slots.js";
+import { registerCheck, runAllChecks, clearChecks } from "./doctor/runner.js";
+import { checkNodeVersion, checkNpmVersion, checkGitVersion, checkOSInfo } from "./doctor/checks/system.js";
+import { checkGhCli, checkHermesBinary } from "./doctor/checks/tools.js";
+import { checkMcpServers } from "./doctor/checks/mcp.js";
+import { checkApiKeys } from "./doctor/checks/keys.js";
+import { checkStructure } from "./doctor/checks/structure.js";
+import { checkDrift } from "./doctor/checks/drift.js";
+import { renderTable, renderJson, renderQuiet } from "./doctor/formatters.js";
 
 export default defineCommand({
   meta: {
     name: "doctor",
-    description: "Verify lock integrity and file hashes",
+    description: "Comprehensive health check: system, tools, MCP, API keys, structure, drift",
   },
   args: {
-    fix: {
+    json: {
       type: "boolean",
       default: false,
-      description: "Auto-correct safe issues",
+      description: "Machine-readable JSON output",
     },
-    clean: {
+    quiet: {
       type: "boolean",
       default: false,
-      description: "Delete all .helpers_new side-files",
+      description: "Failures only",
     },
   },
   async run({ args }) {
-    const root = process.cwd();
-    let hasIssues = false;
+    clearChecks();
 
-    const lock = await readLock(root);
-    if (!lock) {
-      consola.error("No helpers-lock.json found. Run `helpers init` first.");
-      process.exitCode = ExitCode.UsageError;
-      return;
-    }
+    registerCheck(checkNodeVersion);
+    registerCheck(checkNpmVersion);
+    registerCheck(checkGitVersion);
+    registerCheck(checkOSInfo);
+    registerCheck(checkGhCli);
+    registerCheck(checkHermesBinary);
+    registerCheck(checkMcpServers);
+    registerCheck(checkApiKeys);
+    registerCheck(checkStructure);
+    registerCheck(checkDrift);
 
-    // 1. Validate lock schema
-    const schemaErrors = validateLock(lock);
-    if (schemaErrors.length > 0) {
-      hasIssues = true;
-      for (const err of schemaErrors) {
-        consola.error(`Lock: ${err.message}`);
-      }
+    const result = await runAllChecks();
+
+    if (args.json) {
+      renderJson(result);
+    } else if (args.quiet) {
+      renderQuiet(result);
     } else {
-      consola.success("Lock schema valid.");
+      renderTable(result);
     }
 
-    // 2. Rehash all tracked files
-    let hashMismatches = 0;
-    for (const entry of lock.files) {
-      try {
-        const content = await readFile(join(root, entry.path), "utf8");
-        const ext = entry.path.match(/\.[^.]+$/)?.[0] ?? ".md";
-
-        if (entry.kind === FileKind.Source) {
-          const slots = parseSlots(content, ext);
-          const slotBodies = slots.map((s) => s.body);
-          const hash = canonicalHash(content, slotBodies);
-          if (hash !== entry.localCanonicalHash) {
-            hashMismatches++;
-            if (args.fix) {
-              entry.localCanonicalHash = hash;
-              entry.slotsHash = slotsHash(slotBodies);
-              consola.info(`Fixed hash for ${entry.path}`);
-            } else {
-              consola.warn(`Hash mismatch: ${entry.path}`);
-            }
-          }
-        } else {
-          const hash = renderedHash(content);
-          if (hash !== entry.localRenderedHash) {
-            hashMismatches++;
-            if (args.fix) {
-              entry.localRenderedHash = hash;
-              consola.info(`Fixed hash for ${entry.path}`);
-            } else {
-              consola.warn(`Hash mismatch: ${entry.path}`);
-            }
-          }
-        }
-      } catch {
-        hasIssues = true;
-        consola.error(`Missing file: ${entry.path}`);
-      }
-    }
-
-    if (hashMismatches > 0) {
-      hasIssues = true;
-      if (args.fix) {
-        await writeLock(root, lock);
-        consola.success(`Fixed ${hashMismatches} hash mismatches.`);
-      } else {
-        consola.warn(`${hashMismatches} hash mismatches. Run with --fix to correct.`);
-      }
-    } else {
-      consola.success("All file hashes match.");
-    }
-
-    // 3. Clean .helpers_new side-files
-    if (args.clean) {
-      // Search for .helpers_new files
-      consola.info("Cleaning is a manual operation. Search for *.helpers_new files in your project.");
-    }
-
-    if (!hasIssues) {
-      consola.success("Doctor check passed — everything looks healthy.");
-    }
+    process.exitCode = result.exitCode;
   },
 });

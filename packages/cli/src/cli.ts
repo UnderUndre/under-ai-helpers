@@ -80,6 +80,7 @@ const main = defineCommand({
     "list-transformers": () => import("./cli/list-transformers.js").then((m) => m.default),
     doctor: () => import("./cli/doctor.js").then((m) => m.default),
     recover: () => import("./cli/recover.js").then((m) => m.default),
+    hermes: () => import("./cli/hermes.js").then((m) => m.default),
     fleet: () => import("./cli/fleet/index.js").then((m) => m.default),
   },
   setup() {
