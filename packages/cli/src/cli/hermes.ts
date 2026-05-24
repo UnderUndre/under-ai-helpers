@@ -4,6 +4,8 @@ import { spawn, execFileSync } from "node:child_process";
 import { readFile, open } from "node:fs/promises";
 import { resolve } from "pathe";
 
+import { CLIError } from "../cli.js";
+
 const DEFAULT_MODEL = process.env.HERMES_DEFAULT_MODEL ?? "glm/glm-5.1";
 const DEFAULT_PROVIDER = "custom";
 
@@ -23,8 +25,9 @@ async function resolvePrompt(
       }
       return { source: "file", text };
     } catch (err) {
-      throw new Error(
+      throw new CLIError(
         `Cannot read --from-file: ${path} — ${err instanceof Error ? err.message : String(err)}`,
+        1,
       );
     }
   }

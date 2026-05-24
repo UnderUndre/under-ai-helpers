@@ -41,6 +41,52 @@ async function collectMdFiles(dir: string): Promise<string[]> {
   return files;
 }
 
+async function detectOrphanSkills(claudeDir: string): Promise<string[]> {
+  const agentsDir = join(claudeDir, "agents");
+  const skillsDir = join(claudeDir, "skills");
+
+  let agentFiles: string[];
+  try {
+    agentFiles = await collectMdFiles(agentsDir);
+  } catch {
+    return [];
+  }
+
+  let availableSkills: Set<string>;
+  try {
+    const skillDirs = await readdir(skillsDir, { withFileTypes: true });
+    availableSkills = new Set(
+      skillDirs.filter((e) => e.isDirectory()).map((e) => e.name),
+    );
+  } catch {
+    return [];
+  }
+
+  const orphans: string[] = [];
+  for (const agentFile of agentFiles) {
+    try {
+      const content = await readFile(agentFile, "utf8");
+      const fm = parseFrontmatter(content);
+      if (!fm?.skills) continue;
+
+      const skillList = fm.skills
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0);
+
+      for (const skill of skillList) {
+        if (!availableSkills.has(skill)) {
+          orphans.push(skill);
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return [...new Set(orphans)];
+}
+
 export async function checkStructure(): Promise<HealthCheck> {
   const root = process.cwd();
   const claudeDir = join(root, ".claude");
@@ -82,7 +128,7 @@ export async function checkStructure(): Promise<HealthCheck> {
       try {
         const content = await readFile(filePath, "utf8");
         const fm = parseFrontmatter(content);
-        if (!fm || (!fm.name && !fm.description)) {
+        if (!fm || !fm.name || !fm.description) {
           invalidFmCount++;
         }
       } catch {
@@ -93,6 +139,13 @@ export async function checkStructure(): Promise<HealthCheck> {
 
   if (invalidFmCount > 0) {
     issues.push(`${invalidFmCount} file(s) with invalid/missing frontmatter`);
+  }
+
+  if (!missingDirs.includes("agents") && !missingDirs.includes("skills")) {
+    const orphans = await detectOrphanSkills(claudeDir);
+    if (orphans.length > 0) {
+      issues.push(`Orphan skill refs in agents: ${orphans.join(", ")}`);
+    }
   }
 
   if (issues.length === 0) {

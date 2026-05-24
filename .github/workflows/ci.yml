@@ -115,6 +115,8 @@ jobs:
         run: npm install --no-save markdownlint-cli
       - name: Lint spec markdown
         run: npx markdownlint "specs/**/*.md" --disable MD013 MD033 MD041
+      - name: Check spec links
+        run: npx markdown-link-check "specs/**/*.md" || true
       - name: Check analyze.md exists
         run: |
           slug=$(echo "${{ github.head_ref }}" | sed 's|^specs/||')

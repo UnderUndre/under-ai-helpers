@@ -51,12 +51,12 @@ description: "Task list for feature 004-devx-bundle-v1: Developer Experience Bun
 
 **User Story**: US1 — Two-Phase Review for SpecKit Features
 
-- [X] T001 [SETUP] [US1] Create constitution amendment for Principle VIII (Two-Phase Review Flow)
+- [X] T001 [SETUP] [US1] Create constitution amendment for Principle IX (Two-Phase Review Flow)
   - Add new principle defining the `specs/<slug>` planning branch → `<slug>` implementation branch pattern
   - Include hotfix carve-out (<50 LOC, prod incident with ticket reference)
   - Document spec patch drift policy during implementation
-  - **Files**: `CONSTITUTION.md` (or equivalent governance doc)
-  - **Acceptance**: Principle VIII is present with two-phase flow definition, hotfix carve-out, and drift policy
+  - **Files**: `.specify/memory/constitution.md`
+  - **Acceptance**: Principle IX is present with two-phase flow definition, hotfix carve-out, and drift policy
   - **Dependencies**: none
 
 - [X] T002 [OPS] [US1] Create spec PR template
@@ -160,7 +160,7 @@ description: "Task list for feature 004-devx-bundle-v1: Developer Experience Bun
   - Unit tests for binary detection (mock PATH)
   - Unit tests for flag passthrough (arg construction)
   - Integration test for --background spawn (mock child_process)
-  - **Files**: `packages/cli/src/__tests__/hermes.test.ts`
+  - **Files**: `packages/cli/tests/unit/hermes.test.ts`
   - **Acceptance**: Tests cover all acceptance scenarios from US2; all pass
   - **Dependencies**: T012
 
@@ -251,7 +251,7 @@ description: "Task list for feature 004-devx-bundle-v1: Developer Experience Bun
   - Unit tests for each output formatter
   - Integration test for full doctor pipeline
   - Edge case: no `.claude/` directory (structural checks report missing, others run)
-  - **Files**: `packages/cli/src/__tests__/doctor.test.ts`, `packages/cli/src/__tests__/doctor/`
+  - **Files**: `packages/cli/tests/unit/doctor/checks.test.ts`, `packages/cli/tests/unit/doctor/`
   - **Acceptance**: Tests cover all check categories, formatters, edge cases; all pass
   - **Dependencies**: T022
 

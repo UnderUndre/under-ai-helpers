@@ -22,7 +22,11 @@ npm test
 ## Branch Strategy
 
 - `main` — stable; CI (see `.github/workflows/ci.yml`) must pass (validate + test + build + drift check)
-- Feature branches: `type/short-description` (e.g., `feat/cursor-transformer`)
+- Feature branches use a **two-phase review flow** (Principle IX):
+  1. **Planning PR** (`specs/<slug>` branch): spec-only artifacts (spec.md, plan.md, tasks.md, reviews/). Lightweight CI (markdown lint + analyze check).
+  2. **Implementation PR** (`<slug>` branch): code changes. Full CI (test, build, lint, type check, drift check).
+- Use `/speckit.start <desc>` to create the planning branch and worktree
+- Hotfix carve-out: production fixes (<50 LOC, incident ticket) may bypass the two-phase flow
 - PRs into `main`, squash merge
 
 ## Commit Conventions

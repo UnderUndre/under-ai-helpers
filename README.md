@@ -51,6 +51,22 @@ npx clai-helpers add-target copilot
 
 Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 
+### Health Check
+
+```bash
+npx clai-helpers doctor          # Full health matrix
+npx clai-helpers doctor --json   # JSON output
+npx clai-helpers doctor --quiet  # Failures only
+```
+
+### Hermes Wrapper
+
+```bash
+npx clai-helpers hermes "prompt"              # Forward prompt
+npx clai-helpers hermes --from-file file.txt  # From file
+npx clai-helpers hermes --background "prompt" # Detached mode
+```
+
 ## What Gets Synced
 
 | Source (`.claude/`) | Copilot (`.github/`) | Gemini (`.gemini/`) |
@@ -91,7 +107,7 @@ Your custom content here. Never overwritten by sync.
 # CLI tool
 cd packages/cli
 npm install
-npm test        # 128 tests
+npm test        # 302 tests
 npm run build   # Compile to dist/
 ```
 
