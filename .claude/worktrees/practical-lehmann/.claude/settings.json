@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "stop": [
+      {
+        "command": "npm run validate",
+        "on_fail": "report"
+      }
+    ]
+  }
+}

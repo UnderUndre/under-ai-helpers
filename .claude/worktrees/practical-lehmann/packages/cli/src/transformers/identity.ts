@@ -1,0 +1,27 @@
+/**
+ * Identity transformer: copy source content as-is.
+ * Used for .claude/ → .claude/ target (no transformation).
+ */
+
+import { FileKind } from "../types/common.js";
+import type { TransformerFn, ParsedFile, TransformContext, RenderedFile } from "./types.js";
+
+const identity: TransformerFn = (
+  source: ParsedFile,
+  _ctx: TransformContext,
+): RenderedFile => {
+  // Remap CLAUDE.md at root (no subdirectory) to project root CLAUDE.md
+  const targetPath = source.sourcePath === "CLAUDE.md"
+    ? "CLAUDE.md"
+    : `.claude/${source.sourcePath}`;
+
+  return {
+    targetPath,
+    content: source.content,
+    kind: FileKind.Generated,
+    fromSource: source.sourcePath,
+    transformer: "identity",
+  };
+};
+
+export default identity;

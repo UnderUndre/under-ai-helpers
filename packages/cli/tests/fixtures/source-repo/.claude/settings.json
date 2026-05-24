@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": ["Read", "Grep", "Glob"],
+    "deny": []
+  },
+  "model": "claude-sonnet-4-6"
+}

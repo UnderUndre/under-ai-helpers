@@ -1,0 +1,88 @@
+/**
+ * Ephemeral clone helper for fleet sync.
+ * Creates temp dir, clones repo, provides cleanup with SIGINT safety.
+ */
+
+import { mkdtemp, rm } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { FleetError } from "./types.js";
+
+const execFileAsync = promisify(execFile);
+
+// Track all active clones for SIGINT cleanup
+const activeCleanups = new Set<() => Promise<void>>();
+
+// Register SIGINT handler once
+let sigintHandlerRegistered = false;
+function registerSigintHandler(): void {
+  if (sigintHandlerRegistered) return;
+  sigintHandlerRegistered = true;
+  process.on("SIGINT", async () => {
+    const cleanups = [...activeCleanups];
+    activeCleanups.clear();
+    await Promise.allSettled(cleanups.map((fn) => fn()));
+    process.exit(130);
+  });
+}
+
+export interface EphemeralClone {
+  /** Absolute path to the cloned repo directory. */
+  dir: string;
+  /** Idempotent cleanup — removes the temp directory. Safe to call multiple times. */
+  cleanup: () => Promise<void>;
+}
+
+/**
+ * Clone a repo into a temp directory with `--depth=1`.
+ * Returns the directory path and a cleanup function.
+ *
+ * Rules:
+ * - NEVER uses `--force` in any git command.
+ * - Uses `execFile` (not `exec`) — no shell injection.
+ * - Cleanup is idempotent (double-call is a no-op).
+ * - SIGINT handler drains all active clones.
+ */
+export async function createEphemeralClone(
+  repoUrl: string,
+  defaultBranch: string,
+): Promise<EphemeralClone> {
+  const dir = await mkdtemp(join(tmpdir(), "helpers-fleet-"));
+  let cleaned = false;
+
+  const cleanup = async (): Promise<void> => {
+    if (cleaned) return;
+    cleaned = true;
+    activeCleanups.delete(cleanup);
+    try {
+      await rm(dir, { recursive: true, force: true });
+    } catch {
+      // best-effort cleanup
+    }
+  };
+
+  activeCleanups.add(cleanup);
+  registerSigintHandler();
+
+  try {
+    await execFileAsync("git", [
+      "clone",
+      "--depth=1",
+      "--branch",
+      defaultBranch,
+      repoUrl,
+      dir,
+    ]);
+  } catch (error) {
+    await cleanup();
+    throw new FleetError(
+      "git/clone-failed",
+      `Failed to clone ${repoUrl}: ${error instanceof Error ? error.message : String(error)}`,
+      error,
+    );
+  }
+
+  return { dir, cleanup };
+}

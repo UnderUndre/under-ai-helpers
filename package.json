@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@underundre/undev": "^0.1.0",
+    "underundre-clai-helpers": "^0.5.0"
+  },
+  "scripts": {
+    "install-all": "pnpm run install-clai-helpers && pnpm run install-undev && npx underundre-clai-helpers init",
+    "install-clai-helpers": "pnpm install underundre-clai-helpers && npx underundre-clai-helpers init",
+    "install-undev": "pnpm install @underundre/undev"
+  }
+}

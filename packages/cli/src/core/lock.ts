@@ -1,0 +1,90 @@
+/**
+ * Lock file read/write/validate per contracts/lock.md.
+ * Stored at helpers-lock.json in the target project root.
+ */
+
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "pathe";
+import { normalize as normalizePath } from "pathe";
+import type { LockFile, LockFileEntry } from "../types/lock.js";
+
+const LOCK_FILENAME = "helpers-lock.json";
+
+export async function readLock(root: string): Promise<LockFile | null> {
+  try {
+    const raw = await readFile(join(root, LOCK_FILENAME), "utf8");
+    return JSON.parse(raw) as LockFile;
+  } catch {
+    return null;
+  }
+}
+
+export async function writeLock(root: string, lock: LockFile): Promise<void> {
+  // Normalize all paths to forward-slash before writing
+  lock.files = lock.files.map((entry) => ({
+    ...entry,
+    path: normalizePath(entry.path),
+  }));
+  const content = JSON.stringify(lock, null, 2) + "\n";
+  await writeFile(join(root, LOCK_FILENAME), content, "utf8");
+}
+
+export function validateLock(lock: LockFile): Error[] {
+  const errors: Error[] = [];
+
+  if (lock.schema !== 1) {
+    errors.push(new Error(`Lock schema version ${lock.schema} is not supported. Expected 1.`));
+  }
+
+  // Check for duplicate paths
+  const paths = new Set<string>();
+  for (const entry of lock.files) {
+    const normalized = normalizePath(entry.path);
+    if (paths.has(normalized)) {
+      errors.push(new Error(`Duplicate path in lock file: ${normalized}`));
+    }
+    paths.add(normalized);
+  }
+
+  // Check forward-slash normalization
+  for (const entry of lock.files) {
+    if (entry.path.includes("\\")) {
+      errors.push(new Error(`Path uses backslash: ${entry.path}. Must use forward slashes.`));
+    }
+  }
+
+  // Check fromSource references for generated entries
+  const sourcePaths = new Set(
+    lock.files
+      .filter((e): e is Extract<LockFileEntry, { kind: "source" }> => e.kind === "source")
+      .map((e) => e.path),
+  );
+
+  for (const entry of lock.files) {
+    if (entry.kind === "generated") {
+      if (!sourcePaths.has(entry.fromSource)) {
+        errors.push(
+          new Error(`Generated entry ${entry.path} references non-existent source: ${entry.fromSource}`),
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
+export function findEntry(lock: LockFile, path: string): LockFileEntry | undefined {
+  const normalized = normalizePath(path);
+  return lock.files.find((e) => normalizePath(e.path) === normalized);
+}
+
+export function updateEntry(lock: LockFile, entry: LockFileEntry): LockFile {
+  const normalized = normalizePath(entry.path);
+  const idx = lock.files.findIndex((e) => normalizePath(e.path) === normalized);
+  if (idx >= 0) {
+    lock.files[idx] = entry;
+  } else {
+    lock.files.push(entry);
+  }
+  return lock;
+}

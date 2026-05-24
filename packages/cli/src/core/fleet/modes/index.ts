@@ -1,0 +1,46 @@
+/**
+ * Mode dispatcher — re-exports all sync modes and provides a unified entry point.
+ */
+
+import type { FleetEntry, SyncMode, SyncResult } from "../types.js";
+import { syncPr } from "./pr-mode.js";
+import { syncPush } from "./push-mode.js";
+import { syncPatch } from "./patch-mode.js";
+
+export { syncPr } from "./pr-mode.js";
+export { syncPush } from "./push-mode.js";
+export { syncPatch } from "./patch-mode.js";
+export { runSyncPipeline, hasWorkingTreeChanges, getHeadSha, getFullDiff } from "./run-sync.js";
+
+type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
+
+export interface SyncModeOptions {
+  auth: string;
+  latestRef: string;
+  fetchFn?: FetchLike;
+  patchOutputDir?: string;
+}
+
+/**
+ * Dispatch a single fleet entry to the appropriate sync mode.
+ */
+export async function dispatchSync(
+  entry: FleetEntry,
+  mode: SyncMode,
+  options: SyncModeOptions,
+): Promise<SyncResult> {
+  switch (mode) {
+    case "pr":
+      return syncPr(entry, options.auth, options.latestRef, options.fetchFn);
+    case "push":
+      return syncPush(entry, options.auth, options.latestRef, options.fetchFn);
+    case "patch":
+      return syncPatch(
+        entry,
+        options.auth,
+        options.latestRef,
+        options.patchOutputDir ?? "./.fleet-patches",
+        options.fetchFn,
+      );
+  }
+}

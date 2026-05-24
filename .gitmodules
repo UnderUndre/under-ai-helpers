@@ -1,0 +1,12 @@
+[submodule "undrestrator"]
+	path = undrestrator
+	url = git@github.com:UnderUndre/undrestrator.git
+	ignore = dirty
+[submodule "undrecreaitwins"]
+	path = undrecreaitwins
+	url = git@github.com:UnderUndre/undrecreaitwins.git
+	ignore = dirty
+[submodule "OmniRoute"]
+	path = OmniRoute
+	url = git@github.com:UnderUndreGH/OmniRoute.git
+	ignore = dirty
