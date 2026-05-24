@@ -15,6 +15,7 @@ jobs:
   cli-tests:
     name: CLI — validate + test + build
     runs-on: ubuntu-latest
+    if: "!startsWith(github.head_ref, 'specs/')"
     defaults:
       run:
         working-directory: packages/cli
@@ -55,6 +56,7 @@ jobs:
     name: Config drift — .claude/ sources vs generated trees
     runs-on: ubuntu-latest
     needs: cli-tests
+    if: "!startsWith(github.head_ref, 'specs/')"
     steps:
       - uses: actions/checkout@v4
         # Same rationale as cli-tests: no submodules.
@@ -101,6 +103,26 @@ jobs:
           if [ "$diff_ok" -eq 0 ]; then
             echo "::error::Drift detected. Run \`node packages/cli/bin/helpers.mjs regen\` locally and commit the result."
             exit 2
+          fi
+
+  spec-review:
+    name: Spec Review — markdown lint + analyze check
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'specs/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install markdownlint
+        run: npm install --no-save markdownlint-cli
+      - name: Lint spec markdown
+        run: npx markdownlint "specs/**/*.md" --disable MD013 MD033 MD041
+      - name: Check spec links
+        run: npx markdown-link-check "specs/**/*.md" || true
+      - name: Check analyze.md exists
+        run: |
+          slug=$(echo "${{ github.head_ref }}" | sed 's|^specs/||')
+          if [ ! -f "specs/${slug}/reviews/analyze.md" ]; then
+            echo "::error::reviews/analyze.md not found for ${slug}"
+            exit 1
           fi
 
   lint-commits:

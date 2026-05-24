@@ -30,8 +30,25 @@ allowed-tools: Read, Glob, Grep, Bash
 - If `lint` fails: Fix the style or syntax issues immediately.
 - If `tsc` fails: Correct type mismatches before proceeding.
 - If no tool is configured: Check the project root for `.eslintrc`, `tsconfig.json`, `pyproject.toml` and suggest creating one.
+## Automatable AI Engineering Coach Checks
+
+Rules from [microsoft/AI-Engineering-Coach](https://github.com/microsoft/AI-Engineering-Coach) that can be caught by linting:
+
+| Check | Detection Method | Rule |
+|-------|-----------------|------|
+| `as any` in TS files | `grep -r "as any" --include="*.ts"` | Proper type or `unknown` |
+| `console.log()` left in code | `grep -r "console.log" --include="*.ts" --include="*.tsx"` | Use `logger.info()` |
+| Empty catch blocks | `grep -rz "catch.*{ *}" --include="*.ts"` | Log + rethrow |
+| `process.env.X \|\| "fallback"` | `grep -rE 'process\.env\.\w+\s*\|\|' --include="*.ts"` | Throw if missing |
+| Instruction file >4 KB | `wc -c .github/copilot-instructions.md` | Trim to <4 KB |
+| Oversized custom instructions | Check `.claude/` and `.github/instructions/` file sizes | Move examples to separate files |
+| `dangerouslySetInnerHTML` | `grep -r "dangerouslySetInnerHTML" --include="*.tsx"` | Use `DOMPurify.sanitize()` |
+| Magic numbers | `eslint no-magic-numbers` rule | Named constants |
+| `any` type | `tsc --noEmit` + `eslint @typescript-eslint/no-explicit-any` | Proper types |
+| Missing error class | `grep -rE "throw new Error\(" --include="*.ts"` | Typed error classes |
 
 ---
+
 **Strict Rule:** No code should be committed or reported as "done" without passing these checks.
 
 ---

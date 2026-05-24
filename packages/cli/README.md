@@ -190,16 +190,34 @@ helpers list-transformers [--json]
 
 ### `helpers doctor`
 
-Verify lock file integrity and file hashes on disk.
+Run comprehensive health diagnostics across system, tools, MCP servers, API keys, structure, and drift.
 
 ```bash
-helpers doctor [--fix] [--clean]
+helpers doctor            # Full health matrix
+helpers doctor --json     # Machine-readable JSON output
+helpers doctor --quiet    # Show failures only
 ```
 
-| Flag      | Description                                                                        |
-| --------- | ---------------------------------------------------------------------------------- |
-| `--fix`   | Auto-correct safe issues (rebuild staging dir, recalculate hashes)                 |
-| `--clean` | Delete leftover `.helpers_new` side-files from non-interactive conflict resolution |
+Checks: Node.js >=20.x, npm, git, gh CLI auth, hermes binary, MCP servers (context7, filesystem, github, sequential-thinking), API key presence, `.claude/` structural integrity, drift status.
+
+Exit code 0 if all critical checks pass, 1 if any critical check fails.
+
+### `helpers hermes`
+
+Wrap the hermes binary with prompt forwarding, background mode, and flag passthrough.
+
+```bash
+helpers hermes "prompt text"           # Forward prompt to hermes
+helpers hermes --from-file prompt.txt  # Read prompt from file
+echo "prompt" | helpers hermes         # Read from stdin
+helpers hermes --background "prompt"   # Spawn detached, print PID + log path
+helpers hermes --model glm/glm-5.1     # Override model (default: glm/glm-5.1)
+helpers hermes --provider custom        # Override provider (default: custom)
+helpers hermes --toolsets browser,web   # Pass toolsets to hermes
+helpers hermes --verbose "prompt"       # Enable verbose hermes output
+```
+
+Environment variable `HERMES_DEFAULT_MODEL` overrides the default model. Exits with code 127 if hermes binary is not found on PATH.
 
 ### `helpers recover`
 

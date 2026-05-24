@@ -96,6 +96,25 @@ Hybrid enforcement:
 - **Soft baseline**: Intent Routing table + `/dispatch` + `/learn` + `/improve` — all in `.claude/`, transpile to Copilot/Gemini/Codex/Antigravity.
 - **CC ratchet**: hooks under `.claude/hooks/` + `.claude/settings.json` registration. Live upstream-only by design (Hybrid enforcement decision from May 2026 brainstorm). Do not transpile; not in `helpers.config.ts.sources`.
 
+### IX. Two-Phase Review Flow
+
+Feature development uses two distinct branch phases:
+
+1. **Planning branch**: `specs/<slug>` — holds spec-only artifacts (spec.md, plan.md, tasks.md, reviews/). No implementation code.
+2. **Implementation branch**: `<slug>` — created from `main` after planning PR merges. Holds code changes.
+
+This replaces the old `feature/<N>-<slug>` convention. Existing `feature/<N>-<slug>` branches are grandfathered; new features MUST use the two-phase pattern.
+
+**Hotfix carve-out**: production hotfixes (<50 LOC, prod incident with ticket reference) skip the two-phase flow and may branch directly from `main` using a `hotfix/` prefix.
+
+**Spec patch drift policy**: during implementation, minor spec clarifications that don't change scope may be patched directly into the spec with a dated note (e.g., `<!-- Drift note: 2026-05-25 — clarified error handling → validated with Zod -->`). Scope-changing drift requires a new planning PR.
+
+**Command integration**:
+
+- `/speckit.start` creates `specs/<slug>` branches.
+- `/speckit.implement` creates `<slug>` implementation branches from `main` after planning merge.
+- Branch auto-cleanup targets `specs/<slug>` branches after merge (via CI workflow).
+
 ## Technical Constraints
 
 > Moved to [`../../specs/main/requirements.md`](../../specs/main/requirements.md) §2.1 (single source of truth). Constitution governs **principles**; concrete tech-stack constraints live alongside requirements where they belong.
@@ -137,10 +156,11 @@ This file (the constitution) is loaded at the Constitution Check gate of `/speck
 4. **Complexity must be justified.** Every new agent, transformer, target, or skill adds load to every downstream session. A change that doesn't earn its weight is rejected.
 5. **Anti-sycophancy applies to review of this file too.** If a principle above is wrong for the project, say so and propose an amendment. Don't quietly ignore it.
 
-**Version**: 1.4.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-05-06
+**Version**: 1.5.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-05-25
 
 ### Changelog
 
+- **1.5.0** (2026-05-25) — Added Principle IX: Two-Phase Review Flow. Formalizes `specs/<slug>` planning branch → `<slug>` implementation branch pattern with hotfix carve-out and drift policy. Breaking change from `feature/<N>-<slug>` convention. Companion to 004-devx-bundle-v1.
 - **1.4.0** (2026-05-06) — Added Principle VIII: Self-Maintaining Knowledge. Documents the May 2026 self-maintaining workflow infrastructure (Intent Routing + `/dispatch` + 3 hooks + `/learn` + `/improve` + `specs/main/`). NOT NON-NEGOTIABLE — fuzzy signals only, no `/speckit.implement` block. Hybrid enforcement: soft baseline transpiles everywhere; CC ratchet (hooks) lives upstream-only. Companion build-out: brainstorm Option B implemented over Steps 1-7.
 - **1.3.0** (2026-05-06) — Moved "Technical Constraints" section out of constitution to [`specs/main/requirements.md`](../../specs/main/requirements.md) §2.1 as part of project-doc consolidation. Constitution now governs **principles only**; concrete tech-stack constraints live with requirements. No principle changes; no behavioral diff for `/speckit.*` commands.
 - **1.2.0** (2026-04-26) — Added Principle VII: Artifact Versioning. Every speckit pipeline stage (specify/clarify/plan/tasks/review) now tags the commit via `snapshot-stage.{sh,ps1}` using `<stage>/<slug>/v<N>` convention. Enables `/speckit.diff` and `/speckit.retrospective` without parallel `.history/` files. Idempotent via `--points-at HEAD` guard.
