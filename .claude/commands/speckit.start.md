@@ -70,7 +70,9 @@ fi
 ### 3. Create Worktree + Branch
 
 ```bash
-git worktree add ".claude/worktrees/${slug}" -b "specs/${slug}"
+# Reuse existing branch if present, else create new
+git worktree add ".claude/worktrees/${slug}" "specs/${slug}" 2>/dev/null || \
+  git worktree add ".claude/worktrees/${slug}" -b "specs/${slug}"
 ```
 
 If `.claude/worktrees/` doesn't exist, create it first. The branch is created from the current HEAD of the default branch (`main` or whatever is configured).

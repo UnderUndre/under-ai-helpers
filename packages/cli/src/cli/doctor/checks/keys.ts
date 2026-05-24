@@ -13,12 +13,14 @@ const GLM_ENV = "GLM_API_KEY";
 export async function checkApiKeys(): Promise<HealthCheck> {
   const present: string[] = [];
   const missing: string[] = [];
+  let hasAnyCriticalFail = false;
 
-  for (const { env, label } of KEY_ENV_VARS) {
+  for (const { env, label, critical } of KEY_ENV_VARS) {
     if (process.env[env]) {
       present.push(label);
     } else {
       missing.push(label);
+      if (critical) hasAnyCriticalFail = true;
     }
   }
 
@@ -41,6 +43,7 @@ export async function checkApiKeys(): Promise<HealthCheck> {
     zhipuGlmStatus = "fail";
     zhipuGlmDetail = "Neither ZHIPU nor GLM key present";
     missing.push("ZHIPU/GLM");
+    hasAnyCriticalFail = true;
   }
 
   const parts: string[] = [];
@@ -53,8 +56,6 @@ export async function checkApiKeys(): Promise<HealthCheck> {
   } else if (missing.length > 0) {
     parts.push(`Missing: ${missing.join(", ")}`);
   }
-
-  const hasAnyCriticalFail = zhipuGlmStatus === "fail";
 
   return {
     name: "keys.api-keys",

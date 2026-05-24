@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import consola from "consola";
 import { spawn, execFileSync } from "node:child_process";
-import { readFile, open } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "pathe";
 
 import { CLIError } from "../cli.js";
@@ -21,7 +21,7 @@ async function resolvePrompt(
     try {
       const text = await readFile(path, "utf8");
       if (!text.trim()) {
-        throw new Error(`File is empty: ${path}`);
+        throw new CLIError(`File is empty: ${path}`, 1);
       }
       return { source: "file", text };
     } catch (err) {
@@ -85,16 +85,32 @@ async function spawnBackground(
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const logPath = resolve(`.hermes-output-${timestamp}.log`);
 
-  const logFd = await open(logPath, "w");
+  // Open log file with sync API so we can pass the raw FD to child stdio.
+  // Detached child inherits the FD; we do NOT close it in parent — kernel
+  // ref-counts the open file description, so child keeps writing after
+  // we lose our reference.
+  const { openSync } = await import("node:fs");
+  const logFd = openSync(logPath, "a");
+
   const child = spawn(hermesBin, ["-z", ...hermesArgs], {
-    stdio: ["pipe", logFd.createWriteStream(), logFd.createWriteStream()],
+    stdio: ["pipe", logFd, logFd],
     detached: true,
   });
 
-  child.stdin?.write(promptText);
-  child.stdin?.end();
+  // Handle spawn-time errors (ENOENT, permission denied) explicitly.
+  // Without this, an 'error' event becomes an unhandled exception.
+  let spawnError: Error | null = null;
+  child.on("error", (err) => {
+    spawnError = err;
+  });
+
+  if (child.stdin) {
+    child.stdin.write(promptText);
+    child.stdin.end();
+  }
 
   const pid = child.pid;
+  // stdout is the machine-readable interface for piping (jq/awk) — keep console.log.
   console.log(`PID: ${pid}`);
   console.log(`Log: ${logPath}`);
 
@@ -103,16 +119,24 @@ async function spawnBackground(
     setTimeout(() => res(null), 2000);
   });
 
+  if (spawnError) {
+    consola.error(
+      `Failed to spawn hermes: ${(spawnError as Error).message}`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   if (earlyExit !== null) {
     consola.error(
       `Hermes exited early with code ${earlyExit}. Check ${logPath}`,
     );
-    process.exitCode = earlyExit ?? 1;
+    process.exitCode = earlyExit;
     return;
   }
 
   child.unref();
-  await logFd.close();
+  // Do NOT close logFd here — child still holds a reference via inherited stdio.
 }
 
 export { resolvePrompt, buildHermesArgs, findHermesBinary };
@@ -195,8 +219,16 @@ export default defineCommand({
     const child = spawn(hermesBin, ["-z", ...hermesArgs], {
       stdio: ["pipe", "inherit", "inherit"],
     });
-    child.stdin.write(prompt!.text);
-    child.stdin.end();
+
+    child.on("error", (err) => {
+      consola.error(`Failed to spawn hermes: ${err.message}`);
+      process.exitCode = 1;
+    });
+
+    if (child.stdin) {
+      child.stdin.write(prompt!.text);
+      child.stdin.end();
+    }
 
     const exitCode = await new Promise<number>((res) => {
       child.on("exit", (code) => res(code ?? 1));
