@@ -1,0 +1,27 @@
+Fix the following issues from code review (analyze.md). Spawn subagents for parallel work where possible.
+
+TASK 1 - B1, F7: Principle number drift
+- File: specs/004-devx-bundle-v1/spec.md, specs/004-devx-bundle-v1/plan.md, specs/004-devx-bundle-v1/tasks.md
+- What to do: Fix T001 to say "Principle IX" in tasks.md. Resolve Assumption #9 to specify "Principle IX (Two-Phase Review Flow)" in spec.md. Fix Step 1 to say "Principle IX" consistently in plan.md.
+
+TASK 2 - B2: Wrong file path in T001
+- File: specs/004-devx-bundle-v1/tasks.md
+- What to do: Fix T001 file path from CONSTITUTION.md to .specify/memory/constitution.md.
+
+TASK 3 - B3: Command file naming
+- File: specs/004-devx-bundle-v1/tasks.md
+- What to do: Check actual command file naming convention in repo (.claude/commands/speckit/start.md vs .claude/commands/speckit.start.md) and fix T005 if needed.
+
+TASK 4 - C1: ZHIPU_API_KEY/GLM_API_KEY ambiguity
+- File: specs/004-devx-bundle-v1/tasks.md
+- What to do: Update T018 description to match FR-021: "Check BOTH ZHIPU_API_KEY and GLM_API_KEY; warn if only one; fail critical if both missing."
+
+TASK 5 - F1, F3, F4: Incorrect task counts in Agent Summary table
+- File: specs/004-devx-bundle-v1/tasks.md
+- What to do: Fix Agent Summary table task counts. [OPS] fix to 4 tasks. [BE] fix to 18 tasks. [DOC] fix to 5 tasks.
+
+TASK 6 - F2, F5: Inconsistent blocking for Phase 1 / Lane B
+- File: specs/004-devx-bundle-v1/tasks.md
+- What to do: Remove T005 blocking from Lane B in Parallel Lanes. Align tasks.md with plan.md (Phase 1 starts immediately, dependencies: None for Phase 1).
+
+Do NOT commit. When done, print a one-line summary per task with the absolute file path touched.
