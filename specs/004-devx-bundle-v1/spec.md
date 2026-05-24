@@ -153,7 +153,7 @@ As a project maintainer, I want to import the 45 anti-pattern rules from Microso
 6. The imported rules from AI-Engineering-Coach are adapted (not verbatim copied) to match our format and Valera tone. The 45 rules are treated as advisory content, not executable code.
 7. The `doctor` command replaces the existing lock-integrity-only implementation. The old behavior is subsumed under the new drift-check category.
 8. `specs/<slug>` PR CI config will use path filters (`paths: ['specs/<slug>/**']`) to trigger reduced CI. Implementation PR CI will not have path filters.
-9. The constitution amendment for Principle VIII (Two-Phase Review Flow) adds a new principle or extends the existing workflow section. The exact constitutional mechanism (new principle vs. amendment to existing) is an implementation detail.
+9. The constitution amendment adds **Principle IX (Two-Phase Review Flow)** as a new principle. The exact constitutional mechanism (new principle vs. amendment to existing) is resolved: new Principle IX.
 10. `/speckit.start` branch naming convention change: planning branch is `specs/<slug>` (not `feature/<N>-<slug>`). The `feature/` prefix and `NNN-` numbering are dropped for the new flow. Existing features in flight keep their old branch names.
 
 ## Clarifications
