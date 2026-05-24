@@ -1,8 +1,0 @@
-[submodule "undrllai"]
-	path = undrllai
-	url = git@github.com:UnderUndre/undrllai.git
-	ignore = dirty
-[submodule "underproxy"]
-	path = underproxy
-	url = git@github.com:UnderUndre/underproxy.git
-	ignore = dirty
