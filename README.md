@@ -14,14 +14,14 @@ packages/cli/     # CLI tool that does the transpilation
 specs/            # Feature specifications and design docs
 ```
 
-## CLI Tool: `clai-helpers`
+## CLI Tool: `underundre-clai-helpers`
 
 The core of this repo. Treats `.claude/` as the single source of truth and transpiles it into Copilot and Gemini formats.
 
 ### Install in your project
 
 ```bash
-npx clai-helpers init --source github:UnderUndre/ai
+npx underundre-clai-helpers init --source github:UnderUndre/under-ai-helpers
 ```
 
 This will generate `.claude/`, `.github/prompts/`, `.github/instructions/`, `.gemini/commands/`, `.gemini/agents/`, `CLAUDE.md`, `GEMINI.md`, and a `helpers-lock.json` lock file.
@@ -29,13 +29,13 @@ This will generate `.claude/`, `.github/prompts/`, `.github/instructions/`, `.ge
 ### Update
 
 ```bash
-npx clai-helpers sync --upgrade
+npx underundre-clai-helpers sync --upgrade
 ```
 
 ### CI drift detection
 
 ```bash
-npx clai-helpers status --strict
+npx underundre-clai-helpers status --strict
 # Exit code 2 = someone edited a managed file
 ```
 
@@ -43,10 +43,10 @@ npx clai-helpers status --strict
 
 ```bash
 # Only Claude (skip Copilot/Gemini)
-npx clai-helpers init --source github:UnderUndre/ai --targets claude
+npx underundre-clai-helpers init --source github:UnderUndre/ai --targets claude
 
 # Add Copilot later
-npx clai-helpers add-target copilot
+npx underundre-clai-helpers add-target copilot
 ```
 
 Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
@@ -54,17 +54,17 @@ Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 ### Health Check
 
 ```bash
-npx clai-helpers doctor          # Full health matrix
-npx clai-helpers doctor --json   # JSON output
-npx clai-helpers doctor --quiet  # Failures only
+npx underundre-clai-helpers doctor          # Full health matrix
+npx underundre-clai-helpers doctor --json   # JSON output
+npx underundre-clai-helpers doctor --quiet  # Failures only
 ```
 
 ### Hermes Wrapper
 
 ```bash
-npx clai-helpers hermes "prompt"              # Forward prompt
-npx clai-helpers hermes --from-file file.txt  # From file
-npx clai-helpers hermes --background "prompt" # Detached mode
+npx underundre-clai-helpers hermes "prompt"              # Forward prompt
+npx underundre-clai-helpers hermes --from-file file.txt  # From file
+npx underundre-clai-helpers hermes --background "prompt" # Detached mode
 ```
 
 ## What Gets Synced
@@ -95,7 +95,7 @@ Your custom content here. Never overwritten by sync.
 | `.claude/commands/` | Claude Code slash commands (54 commands) |
 | `.claude/agents/` | Specialist agent definitions (27 agents) |
 | `.claude/skills/` | Reusable skill modules (44 skills) |
-| `packages/cli/` | The `clai-helpers` npm package |
+| `packages/cli/` | The `underundre-clai-helpers` npm package |
 | `specs/` | Feature specs, plans, contracts, tasks |
 | `.specify/` | Spec Kit pipeline: memory (constitution), scripts, templates |
 | `.github/instructions/` | Hand-written Copilot instruction files (coding, persona, project) |
