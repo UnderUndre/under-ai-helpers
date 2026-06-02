@@ -201,14 +201,14 @@ Delete a memory entry by ID, scoped by default to the calling agent's current pr
 **Output**:
 ```typescript
 {
-  deleted: boolean;       // false if entry not found or scoped to another project
+  deleted: boolean;       // false if entry not found or not in the caller's project scope
   id: string;
 }
 ```
 
 **Side effects**: Deletes from `memory_entries`, `memory_fts`, `memory_vectors`. Emits `memory_deleted` event.
 
-**Rate Limiting & Scope**: Rate-limited to a maximum of 100 delete calls per 60 seconds per `agent_name`. If exceeded, returns `RATE_LIMIT_EXCEEDED` error. Deletion is strictly scoped to the calling agent's `project_id` context. If the entry belongs to a different project, returns `NOT_AUTHORIZED`.
+**Rate Limiting & Scope**: Rate-limited to a maximum of 100 delete calls per 60 seconds per `agent_name`. If exceeded, returns `RATE_LIMIT_EXCEEDED` error. Deletion is strictly scoped to the calling agent's `project_id` context: an entry that belongs to a different project is treated as not found and returns `deleted: false` (no cross-project existence leak, no error). For deliberate cross-project deletion use `memory_delete_cross_project`, which requires an explicit target `project_id`.
 
 ---
 

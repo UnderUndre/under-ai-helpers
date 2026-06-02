@@ -78,7 +78,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 
 ## 5.1 Memory Board Service Layout
 
-`packages/memory-board/` — standalone MCP tool server (`underboard`) for agent task board + shared semantic memory. Independently versioned from `clai-helpers`.
+`packages/underboard/` — standalone MCP tool server (`underboard`) for agent task board + shared semantic memory. Independently versioned from `clai-helpers`.
 
 | Path | What |
 |------|------|
@@ -157,7 +157,7 @@ Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --ex
                       ▼
            ┌─────────────────────┐
            │  packages/           │
-           │  memory-board/       │
+           │  underboard/         │
            │  ┌─────────────────┐│
            │  │   MCP Server    ││
            │  │   + Tool Reg.   ││

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Single SQLite database file with six tables, one FTS5 virtual table, and one sqlite-vec virtual table. All timestamps are ISO 8601 strings (UTC). All IDs are UUIDv7 (time-sortable, globally unique).
+Single SQLite database file with six tables, one FTS5 virtual table, and one sqlite-vec virtual table. All timestamps are ISO 8601 strings in strict UTC form `YYYY-MM-DDTHH:mm:ss.sssZ` — exactly 3 fractional-second digits and a literal `Z` suffix. This fixed width guarantees that lexicographic string comparison (used by the `if_match` compare-and-swap check on `updated_at`) matches chronological order across every client library. All IDs are UUIDv7 (time-sortable, globally unique).
 
 ## Schema
 
@@ -69,20 +69,21 @@ CREATE TABLE memory_entries (
                    CHECK (embedding_status IN ('pending', 'ready', 'failed')),
   content_hash     TEXT NOT NULL,          -- SHA-256 of content (for dedup)
   created_at       TEXT NOT NULL,          -- ISO 8601 UTC (= first provenance timestamp)
-  FOREIGN KEY (project_id) REFERENCES projects(id)
+  FOREIGN KEY (project_id) REFERENCES projects(id),
+  UNIQUE (project_id, content_hash)        -- DB-level dedup guard (see Dedup constraint note)
 );
 ```
 
 **Indexes**:
 ```sql
-CREATE INDEX idx_memory_project_hash    ON memory_entries(project_id, content_hash);
+-- (project_id, content_hash) lookups are served by the UNIQUE constraint's implicit index
 CREATE INDEX idx_memory_project_created ON memory_entries(project_id, created_at DESC);
 CREATE INDEX idx_memory_embedding_status ON memory_entries(embedding_status) WHERE embedding_status = 'pending';
 ```
 
-**Dedup constraint** (application-level, not UNIQUE, because we want provenance merge):
-- Before INSERT, check `SELECT id FROM memory_entries WHERE project_id = ? AND content_hash = ?`.
-- If found, UPDATE provenance by appending new `{agent, ts}`, return existing ID.
+**Dedup constraint** (DB-enforced via `UNIQUE (project_id, content_hash)`, with provenance merge on conflict):
+- Write as an upsert: `INSERT ... ON CONFLICT (project_id, content_hash) DO UPDATE SET provenance = <append {agent, ts}>`, returning the row ID.
+- The UNIQUE constraint makes concurrent writes from multiple agents safe — two racing `INSERT`s can never create duplicate rows; the conflict branch performs the provenance merge instead.
 - `content_hash` = SHA-256 of `content` column, computed at write time.
 
 ### Table: `activity_log`

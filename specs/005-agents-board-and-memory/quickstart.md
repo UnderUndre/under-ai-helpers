@@ -39,8 +39,6 @@ On first start:
 
 ### Claude Code (MCP config)
 
-### Claude Code (MCP config)
-
 Add to your project's MCP configuration (`mcp.json`):
 ```json
 {

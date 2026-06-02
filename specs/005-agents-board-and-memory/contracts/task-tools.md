@@ -33,6 +33,7 @@ Create a new task on the board.
   archived: boolean;
   created_at: string;
   updated_at: string;
+  warnings?: string[];        // Non-fatal validation notes, e.g. dependency IDs that don't resolve
 }
 ```
 
