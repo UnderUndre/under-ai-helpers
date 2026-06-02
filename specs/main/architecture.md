@@ -76,6 +76,24 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `tests/fixtures/golden/` | Golden-fixture tests for every transformer (Principle II corollary). |
 | `package.json` | npm metadata. Version lives here, bumped only via `npm version` / `/bump` (Principle IV). `prepublishOnly` runs validate + test + build. |
 
+## 5.1 Memory Board Service Layout
+
+`packages/underboard/` — standalone MCP tool server (`underboard`) for agent task board + shared semantic memory. Independently versioned from `clai-helpers`.
+
+| Path | What |
+|------|------|
+| `src/server/` | MCP server (stdio + SSE transport), HTTP server (dashboard + health), tool registry. |
+| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event. Migrations. sqlite-vec + FTS5 for retrieval. |
+| `src/embedding/` | ONNX Runtime wrapper + all-MiniLM-L6-v2 model auto-download. |
+| `src/retrieval/` | Hybrid retrieval: BM25 (FTS5) + cosine (sqlite-vec) score fusion. |
+| `src/project/` | CWD → project ID detector (Git root / `.under-project` marker). |
+| `src/events/` | In-process event bus for SSE push to dashboard clients. |
+| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, delete), tasks (create, update, list, assigned, archive), activity log. |
+| `src/cli/` | Commander CLI: start, stop, status, export, import. |
+| `dashboard/` | Static HTML/CSS/JS SPA (vanilla, no build step). Kanban board, memory feed, activity log. |
+| `tests/` | Unit + integration tests (vitest). |
+| Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts. |
+
 ## 6. SpecKit Integration
 
 | Path | Purpose |
@@ -126,7 +144,53 @@ Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage
 
 Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --exit-code` (upstream CI). Exit 2 = managed file edited by hand.
 
-## 10. See Also
+## 10. Memory Board Data Flow
+
+```
+  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+  │ Claude Code  │  │   Gemini CLI │  │  Codex/Hermes│
+  │   (MCP)      │  │    (MCP)     │  │    (MCP)     │
+  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+         │                 │                  │
+         └────────────┬────┴──────────────────┘
+                      │ SSE transport (MCP)
+                      ▼
+           ┌─────────────────────┐
+           │  packages/           │
+           │  underboard/         │
+           │  ┌─────────────────┐│
+           │  │   MCP Server    ││
+           │  │   + Tool Reg.   ││
+           │  └────────┬────────┘│
+           │           │          │
+           │  ┌────────┴────────┐│
+           │  │ Storage Layer   ││
+           │  │ (SQLite + vec   ││
+           │  │  + FTS5)        ││
+           │  └────────┬────────┘│
+           │           │          │
+           │  ┌────────┴────────┐│
+           │  │ Embedding Svc   ││
+           │  │ (ONNX Runtime   ││
+           │  │  MiniLM)        ││
+           │  └─────────────────┘│
+           └──────────┬──────────┘
+                      │
+              ┌───────┴───────┐
+              │  Event Bus    │
+              │  (in-process) │
+              └───────┬───────┘
+                      │ SSE
+                      ▼
+              ┌───────────────┐
+              │   Dashboard   │
+              │   (browser)   │
+              └───────────────┘
+```
+
+Single-user, localhost-only, offline-first. SQLite file at `~/.underboard/data.db`.
+
+## 11. See Also
 
 - [`requirements.md`](requirements.md) — what the project must do (functional + non-functional + repo rules).
 - [`../../CLAUDE.md`](../../CLAUDE.md) — AI agent operating instructions.
