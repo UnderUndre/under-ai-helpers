@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Underboard — Task Board & Memory</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <h1 class="header-title">Underboard</h1>
+      <span class="health-indicator" id="health-indicator" title="Service health">●</span>
+    </div>
+    <div class="header-right">
+      <span class="header-info" id="uptime-info"></span>
+      <span class="header-info" id="model-status"></span>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <div class="board-area">
+      <div class="filter-bar" role="toolbar" aria-label="Task filters">
+        <select id="filter-project" aria-label="Filter by project">
+          <option value="">All Projects</option>
+        </select>
+        <input type="text" id="filter-assignee" placeholder="Filter by assignee" aria-label="Filter by assignee">
+        <input type="text" id="filter-search" placeholder="Search tasks..." aria-label="Search tasks">
+        <div class="status-toggles" role="group" aria-label="Status filters">
+          <button class="toggle-btn active" data-status="backlog">Backlog</button>
+          <button class="toggle-btn active" data-status="in_progress">In Progress</button>
+          <button class="toggle-btn active" data-status="blocked">Blocked</button>
+          <button class="toggle-btn active" data-status="review">Review</button>
+          <button class="toggle-btn active" data-status="done">Done</button>
+        </div>
+      </div>
+
+      <div class="kanban-board" role="region" aria-label="Kanban board" id="kanban-board">
+        <div class="kanban-column" data-status="backlog" role="list" aria-label="Backlog">
+          <div class="column-header"><h2>Backlog</h2><span class="column-count">0</span></div>
+          <div class="column-cards"></div>
+        </div>
+        <div class="kanban-column" data-status="in_progress" role="list" aria-label="In Progress">
+          <div class="column-header"><h2>In Progress</h2><span class="column-count">0</span></div>
+          <div class="column-cards"></div>
+        </div>
+        <div class="kanban-column" data-status="blocked" role="list" aria-label="Blocked">
+          <div class="column-header"><h2>Blocked</h2><span class="column-count">0</span></div>
+          <div class="column-cards"></div>
+        </div>
+        <div class="kanban-column" data-status="review" role="list" aria-label="Review">
+          <div class="column-header"><h2>Review</h2><span class="column-count">0</span></div>
+          <div class="column-cards"></div>
+        </div>
+        <div class="kanban-column" data-status="done" role="list" aria-label="Done">
+          <div class="column-header"><h2>Done</h2><span class="column-count">0</span></div>
+          <div class="column-cards"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <h2 class="sidebar-title">Recent Memory</h2>
+      <div id="memory-feed" class="memory-feed" role="feed" aria-label="Recent memory entries"></div>
+    </aside>
+  </main>
+
+  <div class="activity-panel" id="activity-panel" role="complementary" aria-label="Activity log">
+    <div class="activity-header">
+      <h3>Activity Log</h3>
+      <button class="close-btn" id="close-activity" aria-label="Close activity panel">&times;</button>
+    </div>
+    <div id="activity-log" class="activity-log"></div>
+  </div>
+
+  <div class="modal-overlay" id="task-modal" role="dialog" aria-modal="true" aria-label="Task details">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-task-title"></h2>
+        <button class="close-btn" id="close-modal" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
