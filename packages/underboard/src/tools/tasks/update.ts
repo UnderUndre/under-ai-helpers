@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { updateTask, type TaskRow } from "#storage/task-store.ts";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 const VALID_STATUSES = ["backlog", "in_progress", "blocked", "review", "done"];
 
@@ -69,7 +69,7 @@ export function taskUpdate(
     throw new Error(`CONCURRENCY_CONFLICT: task was modified at ${existing.updated_at}`);
   }
 
-  insertEvent(db, "task_updated", {
+  emitEvent(db, "task_updated", {
     id: row.id,
     changes: updates,
     status: row.status,

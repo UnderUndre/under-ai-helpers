@@ -63,7 +63,7 @@ export function writeMemory(
 
   try {
     db.prepare(
-      `INSERT INTO memory (id, project_id, content, tags, provenance, embedding, embedding_status, content_hash, created_at)
+      `INSERT INTO memory_entries (id, project_id, content, tags, provenance, embedding, embedding_status, content_hash, created_at)
        VALUES (?, ?, ?, ?, ?, NULL, 'pending', ?, ?)`
     ).run(
       entry.id,
@@ -83,7 +83,7 @@ export function writeMemory(
 
     const existing = db
       .prepare(
-        `SELECT provenance FROM memory WHERE project_id = ? AND content_hash = ?`
+        `SELECT provenance FROM memory_entries WHERE project_id = ? AND content_hash = ?`
       )
       .get(entry.project_id, contentHash) as
       | { provenance: string }
@@ -95,7 +95,7 @@ export function writeMemory(
     const mergedProvenance = mergeProvenance(existingProvenance, provenanceEntry);
 
     db.prepare(
-      `UPDATE memory SET provenance = ? WHERE project_id = ? AND content_hash = ?`
+      `UPDATE memory_entries SET provenance = ? WHERE project_id = ? AND content_hash = ?`
     ).run(
       JSON.stringify(mergedProvenance),
       entry.project_id,
@@ -103,7 +103,7 @@ export function writeMemory(
     );
 
     const existingRow = db
-      .prepare(`SELECT id FROM memory WHERE project_id = ? AND content_hash = ?`)
+      .prepare(`SELECT id FROM memory_entries WHERE project_id = ? AND content_hash = ?`)
       .get(entry.project_id, contentHash) as { id: string } | undefined;
 
     return {
@@ -119,7 +119,7 @@ export function getMemory(
   id: string
 ): MemoryRow | undefined {
   const row = db
-    .prepare(`SELECT * FROM memory WHERE id = ?`)
+    .prepare(`SELECT * FROM memory_entries WHERE id = ?`)
     .get(id) as Record<string, unknown> | undefined;
   return row ? parseMemoryRow(row) : undefined;
 }
@@ -130,7 +130,7 @@ export function getMemoryByHash(
   contentHash: string
 ): MemoryRow | undefined {
   const row = db
-    .prepare(`SELECT * FROM memory WHERE project_id = ? AND content_hash = ?`)
+    .prepare(`SELECT * FROM memory_entries WHERE project_id = ? AND content_hash = ?`)
     .get(projectId, contentHash) as Record<string, unknown> | undefined;
   return row ? parseMemoryRow(row) : undefined;
 }
@@ -143,7 +143,7 @@ export function listRecentMemory(
   const clampedLimit = Math.max(1, Math.min(limit, 100));
   const rows = db
     .prepare(
-      `SELECT * FROM memory WHERE project_id = ? ORDER BY created_at DESC LIMIT ?`
+      `SELECT * FROM memory_entries WHERE project_id = ? ORDER BY created_at DESC LIMIT ?`
     )
     .all(projectId, clampedLimit) as Record<string, unknown>[];
   return rows.map(parseMemoryRow);
@@ -155,7 +155,7 @@ export function deleteMemory(
   projectId: string
 ): boolean {
   const result = db
-    .prepare(`DELETE FROM memory WHERE id = ? AND project_id = ?`)
+    .prepare(`DELETE FROM memory_entries WHERE id = ? AND project_id = ?`)
     .run(id, projectId);
   return result.changes > 0;
 }
@@ -164,7 +164,7 @@ export function deleteMemoryCrossProject(
   db: Database.Database,
   id: string
 ): boolean {
-  const result = db.prepare(`DELETE FROM memory WHERE id = ?`).run(id);
+  const result = db.prepare(`DELETE FROM memory_entries WHERE id = ?`).run(id);
   return result.changes > 0;
 }
 
@@ -174,7 +174,7 @@ export function updateEmbedding(
   embedding: Buffer
 ): void {
   db.prepare(
-    `UPDATE memory SET embedding = ?, embedding_status = 'ready' WHERE id = ?`
+    `UPDATE memory_entries SET embedding = ?, embedding_status = 'ready' WHERE id = ?`
   ).run(embedding, id);
 }
 
@@ -184,7 +184,7 @@ export function getPendingEmbeddings(
 ): MemoryRow[] {
   const rows = db
     .prepare(
-      `SELECT * FROM memory WHERE embedding_status = 'pending' LIMIT ?`
+      `SELECT * FROM memory_entries WHERE embedding_status = 'pending' LIMIT ?`
     )
     .all(limit) as Record<string, unknown>[];
   return rows.map(parseMemoryRow);

@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { deleteMemoryCrossProject } from "#storage/memory-store.ts";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 export interface CrossProjectDeleteInput {
   id: string;
@@ -13,7 +13,7 @@ export function memoryDeleteCrossProject(
 ): { deleted: boolean; id: string } {
   const deleted = deleteMemoryCrossProject(db, input.id);
   if (deleted) {
-    insertEvent(db, "memory_deleted", { id: input.id, project_id: input.project_id });
+    emitEvent(db, "memory_deleted", { id: input.id, project_id: input.project_id });
   }
   return { deleted, id: input.id };
 }

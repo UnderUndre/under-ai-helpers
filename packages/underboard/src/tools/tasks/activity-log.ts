@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 export function activityLogStart(
   db: Database.Database,
@@ -31,7 +31,7 @@ export function activityLogEmit(
     "INSERT INTO activity_log (id, task_id, agent_name, action_type, detail, timestamp) VALUES (?, ?, ?, ?, ?, ?)"
   ).run(id, input.task_id, context.agent_name, input.action_type, input.detail ?? null, now);
 
-  insertEvent(db, "activity_logged", {
+  emitEvent(db, "activity_logged", {
     task_id: input.task_id,
     agent_name: context.agent_name,
     action_type: input.action_type,

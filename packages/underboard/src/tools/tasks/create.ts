@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
 import { createTask, type TaskRow } from "#storage/task-store.ts";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 const VALID_STATUSES = ["backlog", "in_progress", "blocked", "review", "done"] as const;
 const MAX_TITLE_LENGTH = 1000;
@@ -83,7 +83,7 @@ export function taskCreate(
     notes: null,
   });
 
-  insertEvent(db, "task_created", {
+  emitEvent(db, "task_created", {
     id: row.id,
     project_id: row.project_id,
     title: row.title,

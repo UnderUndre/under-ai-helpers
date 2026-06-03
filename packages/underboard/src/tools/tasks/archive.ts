@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { updateTask, type TaskRow } from "#storage/task-store.ts";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 export interface TaskArchiveInput {
   id: string;
@@ -46,7 +46,7 @@ export function taskArchive(
     throw new Error("TASK_NOT_FOUND: task not found");
   }
 
-  insertEvent(db, "task_archived", {
+  emitEvent(db, "task_archived", {
     id: row.id,
     project_id: row.project_id,
   });

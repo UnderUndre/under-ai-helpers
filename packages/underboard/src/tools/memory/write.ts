@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
 import { writeMemory, computeContentHash } from "#storage/memory-store.ts";
-import { insertEvent } from "#storage/event-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 export interface MemoryWriteInput {
   content: string;
@@ -39,7 +39,7 @@ export function memoryWrite(
     agent_name: context.agent_name,
   });
 
-  insertEvent(db, "memory_added", {
+  emitEvent(db, "memory_added", {
     id: result.id,
     project_id: context.project_id,
     content_snippet: input.content.slice(0, 200),

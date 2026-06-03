@@ -14,8 +14,15 @@ function sha256(input: string): string {
   return crypto.createHash('sha256').update(input).digest('hex');
 }
 
+const projectCache = new Map<string, ProjectInfo>();
+
 export function detectProject(cwd: string): ProjectInfo {
-  let current = path.resolve(cwd);
+  const resolvedCwd = path.resolve(cwd);
+  if (projectCache.has(resolvedCwd)) {
+    return projectCache.get(resolvedCwd)!;
+  }
+
+  let current = resolvedCwd;
   let rootPath: string | undefined;
 
   while (true) {
@@ -50,5 +57,7 @@ export function detectProject(cwd: string): ProjectInfo {
     stableKey = id;
   }
 
-  return { id, stableKey, displayName, rootPath };
+  const info = { id, stableKey, displayName, rootPath };
+  projectCache.set(resolvedCwd, info);
+  return info;
 }

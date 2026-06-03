@@ -41,5 +41,9 @@ export function validateBearerToken(authHeader: string | undefined, expectedToke
   if (!authHeader) return false;
   const match = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!match) return false;
-  return match[1] === expectedToken;
+  const token = match[1];
+  if (token.length !== expectedToken.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken));
 }
