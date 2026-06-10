@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { getMemory, type MemoryRow } from "#storage/memory-store.ts";
+import { getMemory } from "#storage/memory-store.js";
 
 export interface MemoryGetInput {
   id: string;

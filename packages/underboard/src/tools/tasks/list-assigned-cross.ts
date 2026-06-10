@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { listAssignedTasksCrossProject, type TaskRow } from "#storage/task-store.ts";
+import { listAssignedTasksCrossProject, type TaskRow } from "#storage/task-store.js";
 
 export interface ListAssignedCrossInput {
   status?: string | string[];

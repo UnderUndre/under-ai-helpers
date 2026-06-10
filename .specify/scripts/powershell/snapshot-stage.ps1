@@ -21,8 +21,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Guard: must be in git repo
+# Guard: must be in git repo. PS 5.1: run the probe with the preference
+# relaxed — the 2>$null redirect wraps git's stderr ("fatal: not a git
+# repository") in an ErrorRecord that would throw under 'Stop' before
+# $LASTEXITCODE is ever checked.
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 git rev-parse --show-toplevel 2>$null | Out-Null
+$ErrorActionPreference = $prevEAP
 if ($LASTEXITCODE -ne 0) {
     Write-Warning "[snapshot] not in a git repo, skipping stage tag"
     exit 0

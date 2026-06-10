@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import consola from "consola";
-import { createDatabase } from "#storage/database.ts";
+import { createDatabase } from "#storage/database.js";
 
 export async function exportData(outputPath: string): Promise<void> {
   const db = createDatabase();

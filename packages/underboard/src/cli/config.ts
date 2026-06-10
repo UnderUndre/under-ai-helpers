@@ -47,7 +47,7 @@ export async function loadConfig(overrides?: Partial<UnderboardConfig>): Promise
   const { config } = await c12Load<UnderboardConfig>({
     configFile: configPath,
     defaults: DEFAULT_CONFIG,
-    overrides,
+    overrides: overrides as any,
   });
 
   return config;

@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
-import { hybridRetrieve } from "#retrieval/hybrid-retrieval.ts";
-import { embed, getEmbeddingStatus } from "#embedding/embedding-service.ts";
-import { getAllProjects } from "#storage/project-store.ts";
+import { hybridRetrieve } from "#retrieval/hybrid-retrieval.js";
+import { embed, getEmbeddingStatus } from "#embedding/embedding-service.js";
+import { getAllProjects } from "#storage/project-store.js";
 
 export interface CrossProjectRecallInput {
   query: string;
