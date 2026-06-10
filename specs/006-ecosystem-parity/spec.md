@@ -123,6 +123,23 @@ A developer installs the statusline preset and sees session vitals (model, git b
 
 ---
 
+### User Story 7 - Dialog archival (Priority: P3)
+
+A developer runs sessions in any AI tool, and a `.ai/dialogs/` directory accumulates a two-layer archive: raw transcripts (Claude Code only, no modelling cost) and log excerpts (other tools via soft prompt rule). A human-readable INDEX.md catalogs each session — date, tool, branch, theme, brief outcome — for audit, cross-tool reading, and /learn input.
+
+**Why this priority**: Foundational infrastructure for option C (underboard semantic search) in a future feature; establishes audit trail; enables dialog reuse across tools. Same layered philosophy as the harness-enforced guards: reliable capture where free (raw), advisory where necessary (log). Part of the broader DevX investment in this feature.
+
+**Independent Test**: Run a Claude Code session and a Gemini CLI session in the repo; verify `.ai/dialogs/raw/` contains a CC transcript, `.ai/dialogs/log/` has a Gemini summary, and INDEX.md has one entry per session.
+
+**Acceptance Scenarios**:
+
+1. **Given** a Claude Code session, **When** the session ends, **Then** the full transcript is copied to `.ai/dialogs/raw/<date>-<sessionid>-claude.jsonl` with no loss and no cost.
+2. **Given** a non-CC tool session, **When** the session concludes, **Then** a brief summary (key decisions, outputs, issues) is written to `.ai/dialogs/log/<date>-<tool>-<theme>.md` per the documented prompt rule.
+3. **Given** `.ai/dialogs/`, **When** a user opens INDEX.md, **Then** they see one line per archived session (date, tool, branch, theme, link to full file).
+4. **Given** `.ai/dialogs/`, **When** a user runs `/learn` or reads the archive, **Then** both raw and log layers are reachable and consumable by other tools (cross-linking, plain-text format).
+
+---
+
 ### Edge Cases
 
 - Legacy consumer repo already contains copied template files; pack install must not create duplicates or ambiguous precedence (migration/dedupe behavior required).
@@ -152,6 +169,7 @@ A developer installs the statusline preset and sees session vitals (model, git b
 - **FR-012**: The strict drift check MUST cover all new artifact classes introduced by this feature (pack manifests, guard rules, permission presets, eval definitions, statusline preset).
 - **FR-013**: Guard and feedback hooks MUST function on Windows, macOS, and Linux consumer machines.
 - **FR-014**: A CLI-assisted migration MUST detect legacy copied components in a consumer repo, propose the matching packs, and remove duplicates only after user confirmation; migration MUST be re-runnable and MUST NOT delete consumer-authored customizations.
+- **FR-015**: A `.ai/dialogs/` directory (gitignored for `raw/`, tracked for `log/` and `INDEX.md`) MUST be initialized and documented in CLAUDE.md. The raw-layer capture (Claude Code transcript copy) MAY be scaffolded; the log-layer rule (advisory prompt for other tools) MUST be present in CLAUDE.md at release.
 
 ### Key Entities
 
@@ -172,6 +190,7 @@ A developer installs the statusline preset and sees session vitals (model, git b
 - **SC-004**: At release: 100% of new/changed skills are eval-gated and the top-10 most-used skills have passing trigger evals; 100% catalog coverage reached by the follow-up milestone.
 - **SC-005**: The number of maintained format-conversion paths for skills drops by at least half.
 - **SC-006**: Permission prompts during a scripted routine dev session drop by at least 70% with presets installed.
+- **SC-007**: At release, `.ai/dialogs/` is initialized, documented in CLAUDE.md (log-layer rule), and INDEX.md template exists; raw-layer infrastructure (Claude Code hok + normalization script) is backlog (milestone: 007-dialog-capture).
 
 ## Assumptions
 
@@ -180,6 +199,7 @@ A developer installs the statusline preset and sees session vitals (model, git b
 - Guards default to **hard deny** (Standing Orders are MUST-level), with explicit per-invocation override as the only escape hatch — mirroring Standing Order #3's "stop, ask user".
 - Evals run in CI on skill-affecting changes (not on every commit) to control cost; a scheduled full run guards against silent drift.
 - The empty `specs/006-` directory found in the repo was an accidental artifact and was removed as part of creating this spec.
+- **Dialog archival (US7)** is a two-phase commitment: Phase 1 (this feature, 006) = init `.ai/dialogs/`, document log-layer rule in CLAUDE.md, no active capture yet. Phase 2 (follow-up feature, 007-dialog-capture) = Claude Code hook + raw-layer transcript copy + normalization script + underboard integration.
 - Analytics/observability dashboards are **out of scope** — `underboard` already covers task/memory infrastructure; orchestration is `undrestrator`'s domain.
 - No new content (agents/skills/commands) is authored in this feature — it is packaging, enforcement, and quality infrastructure for existing content.
 

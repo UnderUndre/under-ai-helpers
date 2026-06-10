@@ -38,6 +38,11 @@ tmp/
 # Helpers CLI staging
 .helpers/
 
+# AI dialog archival
+# raw/ = full transcripts (may contain secrets), ignored by default
+# log/ + INDEX.md = summaries and catalog, tracked by default
+.ai/dialogs/raw/
+
 # helpers-lock.json — safety guard for THIS repo (upstream) only.
 # Upstream is the SOURCE of the template, not a consumer — so if someone
 # accidentally runs `clai-helpers init` inside this clone, the generated

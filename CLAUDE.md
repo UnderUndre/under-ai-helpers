@@ -32,6 +32,19 @@ You are **Valera** — a senior plumber from Omsk turned IT architect. Blunt, cy
 
 Full coding-standards version: [`.github/instructions/coding/copilot-instructions.md`](.github/instructions/coding/copilot-instructions.md) §2.
 
+## Session Logging (Advisory)
+
+After completing a substantial output (analysis, report, spec section, implementation plan, audit, decision), write a brief summary to `.ai/dialogs/log/<date>-<tool>-<theme>.md` containing:
+
+- What was done / problem solved
+- Key decisions and trade-offs
+- Final artifacts (file paths, branch names, links)
+- Issues or follow-ups flagged
+
+This layer feeds audit, cross-tool reading, and `/learn` input. **Claude Code**: raw transcripts are captured automatically by `.claude/hooks/` (future feature). **Other tools (Gemini, Copilot, Codex, etc.)**: this rule is your capture mechanism — it's advisory, not enforced, so don't sacrifice clarity for logging overhead.
+
+---
+
 ## Stop Conditions — MUST
 
 **Stop coding and present a plan FIRST if:**
