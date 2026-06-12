@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/UnderUndre/ai/specs/006-ecosystem-parity/marketplace-manifest.schema.json",
+  "title": "Marketplace manifest (.claude-plugin/marketplace.json) — GENERATED, do not hand-edit",
+  "type": "object",
+  "required": ["name", "owner", "plugins"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Marketplace id consumers reference in /plugin install <pack>@<name>"
+    },
+    "owner": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional marketplace-level metadata; field set verified against Claude Code docs at implementation (research V1)"
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "description", "version"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "source": {
+            "type": "string",
+            "pattern": "^\\./packs/[a-z][a-z0-9-]*$",
+            "description": "Relative path to generated pack directory"
+          },
+          "description": { "type": "string", "maxLength": 200 },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          }
+        }
+      }
+    }
+  }
+}

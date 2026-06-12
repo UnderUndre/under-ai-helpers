@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/UnderUndre/ai/specs/006-ecosystem-parity/pack-manifest.schema.json",
+  "title": "Pack plugin manifest (packs/<id>/.claude-plugin/plugin.json) — GENERATED",
+  "type": "object",
+  "required": ["name", "description", "version"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "description": { "type": "string", "maxLength": 200 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "author": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+      "description": "OUR extension field: pack ids this pack requires. Claude Code does not auto-resolve (research R9) — enforced at generation time (validator I4/I5) and surfaced by `helpers doctor`."
+    }
+  },
+  "additionalProperties": true,
+  "$comment": "additionalProperties true: Claude Code may grow manifest fields; assembler emits only documented ones. Exact upstream field set verified at implementation (research V1). Pack content layout: packs/<id>/{commands/,agents/,skills/,hooks/,presets/} copied byte-identical from .claude/ + presets/ by the assembler."
+}

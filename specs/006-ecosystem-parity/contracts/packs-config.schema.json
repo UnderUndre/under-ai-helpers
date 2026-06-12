@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/UnderUndre/ai/specs/006-ecosystem-parity/packs-config.schema.json",
+  "title": "packs section of helpers.config.ts — HAND-WRITTEN source of truth for pack membership",
+  "type": "object",
+  "required": ["marketplace", "packs"],
+  "properties": {
+    "marketplace": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "outputDir": { "type": "string", "default": "packs" }
+      }
+    },
+    "packs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description", "version"],
+        "properties": {
+          "description": { "type": "string", "maxLength": 200 },
+          "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "agents": { "type": "array", "items": { "type": "string" } },
+          "commands": { "type": "array", "items": { "type": "string" }, "description": "basenames or globs relative to .claude/commands/" },
+          "skills": { "type": "array", "items": { "type": "string" } },
+          "hooks": { "type": "array", "items": { "type": "string" } },
+          "payload": { "type": "array", "items": { "type": "string" }, "description": "non-component files (presets, statusline) relative to repo root" },
+          "dependsOn": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "$comment": "Validator invariants I1–I5 (data-model.md §1): components exist; full coverage; single ownership; cross-refs resolve within pack ∪ deps; DAG. Build (regen) fails loudly on violation."
+}

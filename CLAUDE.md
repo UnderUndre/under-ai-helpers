@@ -102,6 +102,8 @@ Full list: [`.github/instructions/coding/copilot-instructions.md`](.github/instr
 
 **Protocol**: 1. Identify domain → 2. Read agent file in `.claude/agents/<name>.md` → 3. Load skills from agent's `skills:` frontmatter → 4. Follow agent's workflow.
 
+**Context firewall**: agents are also context isolation. Run context-heavy work (codebase crawls, wide multi-file search, audits, long logs/docs) as a **spawned subagent** — only the distilled result returns to the main session, raw material stays in the subagent's context. Rules in §Context Management → Subagent-first.
+
 **Config priority**:
 
 | Priority | Location                                                  | Content                              |
@@ -337,6 +339,10 @@ Files under `.claude/commands/`, `.claude/agents/`, `.claude/skills/*/SKILL.md` 
 ## Context Management
 
 - **Правило 50%**: `/compact` когда контекст > 50%. `/clear` при переключении на новую задачу.
+- **Subagent-first (экономия главного контекста)**: шаг потребует затащить в сессию заметный объём сырья (краулинг кода, широкий grep/glob по дереву, аудит, длинные логи/доки/diff'ы), а дословно это сырьё дальше не нужно → **спавнь сабагента**, в главный контекст возвращается только выжимка.
+  - Claude Code: Task tool — `explorer-agent`/Explore для read-only разведки, доменный агент из Agent Routing для работы; результат = краткий отчёт, не дамп файлов.
+  - Тулы без сабагентов (Gemini/Copilot/Codex): отдельная сессия/чат под разведку, в рабочую сессию переносится только вывод.
+  - **Анти-правила**: однофайловый Read / точечный Grep — делай сам, спавн дороже выгоды; не плоди сабагентов ради сабагентов — каждый стартует холодным, без твоего контекста; результат сабагента без файлов-пруфов (`path:line`) — не результат, требуй ссылки.
 - **`/rename` + `/resume`**: Переименуй сессию перед очисткой, чтобы вернуться позже.
 - **Параллельные сессии**: Writer/Reviewer паттерн — один Claude пишет, другой ревьюит.
 - **Memory**: persistent memory lives under `C:\Users\[username]\.claude\projects\...\memory\`. See session-start hook output for index. Use sparingly, avoid ephemeral task state.
