@@ -25,8 +25,8 @@ Authoritative content. Edits start here.
 | `.claude/skills/` | 40+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. |
 | `CLAUDE.md` | Root persona/operating instructions for Claude Code. Cross-links to coding standards, persona, and this spec. |
 | `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output) + `packs` section (pack membership mapping + marketplace metadata, feature 006). |
-| `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). |
-| `presets/` | Shippable permission preset (`permissions.json`) + statusline script (`statusline.mjs`), applied to consumer settings via `helpers presets apply` (feature 006). |
+| `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). Plus `dialog-capture.mjs` — Stop-hook wrapper that spawns the dialog-capture pipeline (feature 007). |
+| `presets/` | Shippable permission preset (`permissions.json`) + statusline script (`statusline.mjs`), applied to consumer settings via `helpers presets apply` (feature 006). Plus `presets/redaction/` — redaction catalogs (`catalog_cloud.yml`, `catalog_pii.yml`, `allowlist.yml`) consumed by the dialog normalizer (feature 007). |
 | `.claude/skills/<name>/evals.json` | Co-located skill trigger eval cases; CI ratchet gate via `scripts/skill-evals.mjs` + `.github/workflows/skill-evals.yml` (feature 006). |
 | `.specify/` | SpecKit pipeline scripts + templates + `memory/constitution.md` (governance). |
 
@@ -72,9 +72,10 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 
 | Path | What |
 |------|------|
-| `src/cli/` | Subcommands: `init`, `sync`, `status`, `diff`, `regen`, `doctor`, `add-target`, `remove-target`, `remove`, `recover`, `eject`, `list-transformers`, `migrate` (legacy → packs, feature 006), `presets` (apply permission/statusline presets, feature 006). |
+| `src/cli/` | Subcommands: `init`, `sync`, `status`, `diff`, `regen`, `doctor`, `add-target`, `remove-target`, `remove`, `recover`, `eject`, `list-transformers`, `migrate` (legacy → packs, feature 006), `presets` (apply permission/statusline presets, feature 006), `dialog` (backfill/renormalize/purge/doctor/internal-capture-event, feature 007). |
 | `src/transformers/` | 7+ transformers (`identity` + `claude-to-*`). Pluggable via `registry.ts`. Skill delivery is `identity` for targets with native SKILL.md support — see `docs/target-capabilities.md` (feature 006). |
 | `src/core/packs/` | Pack assembler: membership validation (existence, single ownership, cross-pack dependency DAG), pack tree + `marketplace.json` generation (feature 006). |
+| `src/dialog-capture/` | Dialog capture pipeline (feature 007): file-watch wrapper (chokidar), normalizer (defensive JSONL → markdown), redaction engine (catalog + allowlist + external-scanner hook), atomic INDEX updater, retention pruner, CLI command implementations. See `specs/007-dialog-capture/contracts/`. |
 | `src/core/` | Config loader (`c12`), pipeline executor, file ops, fetch (giget), hash, slots, journal, drift detection. |
 | `bin/helpers.mjs` | Binary entry point. Calls `runCli()` from `dist/cli.js`. |
 | `tests/unit/` | Unit tests (transformers, core modules, slots). |
@@ -89,8 +90,9 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | Path | What |
 |------|------|
 | `src/server/` | MCP server (stdio + SSE transport), HTTP server (dashboard + health), tool registry. |
-| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event, sync_queue, tombstones. Migrations. FTS5 for lexical retrieval. |
+| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event, sync_queue, tombstones. Migrations. FTS5 for lexical retrieval. Dialog spool tables (`dialog_quarantine_spool`, `dialog_outage_spool`, `dialog_tombstones`) added by feature 007. |
 | `src/memory-backend/` | Pluggable memory backend boundary: `MemoryBackend` interface, `HonchoBackend` (REST semantic), `LocalLexicalBackend` (FTS5 fallback), `BackendFactory`, reconciler. |
+| `src/dialog-ingest/` | Dialog ingestion pipeline (feature 007): quarantine spool, outage spool, tombstones, event-driven worker, Honcho Session/Message client. Receives normalized records from `packages/cli/src/dialog-capture/` and routes them into Honcho Sessions per the 008 mapping. |
 | `src/retrieval/` | Lexical retrieval only: BM25 (FTS5). Semantic search delegated to Honcho backend. |
 | `src/project/` | CWD → project ID detector (Git root / `.under-project` marker). |
 | `src/events/` | In-process event bus for SSE push to dashboard clients. |
@@ -100,6 +102,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `tests/` | Unit + integration tests (vitest). |
 | Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts (005 original). |
 | Spec: `specs/008-memory-backend-honcho/` | Backend seam + Honcho integration spec, plan, data model, contracts (008). |
+| Spec: `specs/007-dialog-capture/` | Dialog capture pipeline spec, plan, contracts (007). Phase 2 of 006/US7 — feeds the Honcho Session entity reserved by 008. |
 
 **Backend dependency**: Honcho v3.0.9 (self-hosted Docker stack: Postgres 16 + pgvector, Redis 7, TEI embed + rerank). Local FTS5 serves as permanent offline fallback. ONNX Runtime and sqlite-vec removed (008).
 
@@ -110,7 +113,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `.specify/memory/constitution.md` | Governance: principles + workflow + amendments. Loaded by `/speckit.plan` Constitution Check gate. |
 | `.specify/scripts/{powershell,bash}/` | Scripts that `/speckit.*` commands invoke. PowerShell is source of truth on Windows; bash ports for *nix parity. |
 | `.specify/templates/` | Spec / plan / tasks / checklist templates. |
-| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. |
+| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. `specs/007-dialog-capture/` — Phase 2 of 006/US7: CC transcript capture, normalization, INDEX auto-population, Honcho Session ingestion with quarantine window. `specs/008-memory-backend-honcho/` — backend seam + Honcho integration. |
 | `specs/main/` | **This directory.** Project-wide architecture + requirements (canonical, not feature-scoped). |
 
 Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage.{sh,ps1}`, idempotent via `--points-at HEAD`. `/speckit.diff` and `/speckit.retrospective` read these tags.
