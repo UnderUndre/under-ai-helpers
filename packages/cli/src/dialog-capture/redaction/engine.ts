@@ -62,7 +62,13 @@ export function redact(input: RedactionInput): RedactionResult {
   for (const rule of catalog.rules) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i] || "";
-      const matches = [...line.matchAll(rule.pattern)];
+      // Per gemini-code-assist review: matchAll requires the global /g flag.
+      // Ensure the pattern is global before calling matchAll to avoid TypeError
+      // when custom rules are loaded from YAML catalogs without /g.
+      const globalPattern = rule.pattern.global
+        ? rule.pattern
+        : new RegExp(rule.pattern.source, rule.pattern.flags + "g");
+      const matches = [...line.matchAll(globalPattern)];
       if (matches.length === 0) continue;
 
       // Check allowlist first — allow ALWAYS wins

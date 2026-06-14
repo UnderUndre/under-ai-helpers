@@ -50,7 +50,17 @@ try {
     process.exit(0);
   }
 
-  // Strip quoted strings: '...' and "..." — echo "rm -rf" must NOT trigger.
+  const cmd = event.tool_input.command.trim();
+
+  // Skip echo/printf — these are print commands where quoted destructive
+  // strings are safe (e.g., echo "rm -rf docs"). Per gemini-code-assist review.
+  if (cmd.startsWith("echo ") || cmd.startsWith("printf ")) {
+    process.exit(0);
+  }
+
+  // Remove quote CHARACTERS only (not quoted content) to prevent bypasses
+  // like bash -c "rm -rf /" → bash -c rm -rf / (now matches destructive patterns).
+  // The old implementation replaced quoted substrings with '' allowing bypasses.
   const stripped = stripQuotes(event.tool_input.command);
 
   for (const { re, so, reason } of DESTRUCTIVE_PREFIXES) {
@@ -77,10 +87,10 @@ try {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function stripQuotes(cmd) {
-  // Remove single-quoted and double-quoted substrings.
-  return cmd
-    .replace(/'[^']*'/g, "''")
-    .replace(/"[^"]*"/g, '""');
+  // Remove quote CHARACTERS only, preserving the content inside them.
+  // Per gemini-code-assist review: the old implementation replaced quoted
+  // substrings with '' which allowed bypasses like bash -c "rm -rf" → bash -c "".
+  return cmd.replace(/['"]/g, "");
 }
 
 function emitAsk(standingOrder, reason, originalCommand) {

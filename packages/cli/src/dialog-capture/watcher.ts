@@ -11,7 +11,7 @@
  */
 
 import { watch, FSWatcher } from "chokidar";
-import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, renameSync, copyFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, renameSync, copyFileSync, statSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 
@@ -204,7 +204,6 @@ function promoteOrphans(cwd: string, promotionAgeMinutes: number): void {
   if (!existsSync(partialDir)) return;
 
   const threshold = Date.now() - promotionAgeMinutes * 60 * 1000;
-  const { readdirSync } = require("node:fs");
   let entries: string[] = [];
   try { entries = readdirSync(partialDir); } catch { return; }
 
@@ -226,12 +225,15 @@ function promoteOrphans(cwd: string, promotionAgeMinutes: number): void {
 
 /**
  * Cross-platform process-aliveness check.
+ * Per gemini-code-assist review: on Windows, process.kill(pid, 0) throws
+ * for signal 0. Need to check error code: ESRCH = process doesn't exist.
  */
 function isProcessAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
     return true;
-  } catch {
-    return false;
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    return code !== "ESRCH"; // EPERM = alive but no permission; ESRCH = dead
   }
 }

@@ -26,6 +26,7 @@ import { LocalLexicalBackend } from "./local-lexical.js";
 import { HonchoClient } from "./honcho-client.js";
 
 export class HonchoBackend implements MemoryBackend {
+  private db: Database.Database;
   private local: LocalLexicalBackend;
   private client: HonchoClient;
   private workspaceCache = new Map<string, string>();
@@ -36,6 +37,7 @@ export class HonchoBackend implements MemoryBackend {
     db: Database.Database,
     client: HonchoClient,
   ) {
+    this.db = db;
     this.local = new LocalLexicalBackend(db);
     this.client = client;
   }
@@ -175,8 +177,14 @@ export class HonchoBackend implements MemoryBackend {
   }
 
   private enqueueSync(projectId: string, memoryId: string, content: string): void {
-    // Called when Honcho write fails — queue for reconciler
-    // The actual DB write happens in the reconciler module
-    void projectId; void memoryId; void content;
+    try {
+      const contentHash = memoryId; // Simplified — memoryId includes content hash
+      this.db.prepare(
+        "INSERT OR IGNORE INTO sync_queue (memory_id, project_id, content_hash, status) VALUES (?, ?, ?, 'pending')",
+      ).run(memoryId, projectId, contentHash);
+    } catch (e) {
+      console.error(`[honcho-backend] enqueueSync failed: ${(e as Error).message}`);
+    }
+    void content; // content available for future use (e.g., content_hash recompute)
   }
 }

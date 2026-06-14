@@ -15,10 +15,12 @@
  * [helpers/guard-feedback] marker for consumer hook coexistence.
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { extname, basename } from "node:path";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -32,8 +34,25 @@ const DEBOUNCE_MS = 10_000;
 const TIMEOUT_SECONDS = 30;
 const MAX_OUTPUT_CHARS = 2000;
 
-// In-process debounce map (per hook invocation, not cross-process)
-const debounceMap = new Map();
+// Cross-process debounce: persist timestamps to a temp file
+// (in-process Map is ineffective since each hook invocation is a new process.
+// Per gemini-code-assist review: the old in-process Map was always empty.)
+const DEBOUNCE_FILE = join(tmpdir(), "helpers-post-edit-debounce.json");
+
+function loadDebounce(): Record<string, number> {
+  try {
+    if (existsSync(DEBOUNCE_FILE)) {
+      return JSON.parse(readFileSync(DEBOUNCE_FILE, "utf8"));
+    }
+  } catch {}
+  return {};
+}
+
+function saveDebounce(map: Record<string, number>): void {
+  try {
+    writeFileSync(DEBOUNCE_FILE, JSON.stringify(map));
+  } catch {}
+}
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
@@ -54,20 +73,20 @@ try {
     process.exit(0);
   }
 
-  // (b) Debounce: skip if recently linted
+  // (b) Debounce: skip if recently linted (cross-process via temp file)
   const key = filePath;
   const now = Date.now();
-  const lastRun = debounceMap.get(key);
+  const debounceMap = loadDebounce();
+  const lastRun = debounceMap[key];
   if (lastRun && now - lastRun < DEBOUNCE_MS) {
     process.exit(0);
   }
-  debounceMap.set(key, now);
-  // Clean old entries to avoid memory leak
-  if (debounceMap.size > 100) {
-    for (const [k, t] of debounceMap) {
-      if (now - t > DEBOUNCE_MS * 6) debounceMap.delete(k);
-    }
+  debounceMap[key] = now;
+  // Clean old entries
+  for (const k of Object.keys(debounceMap)) {
+    if (now - debounceMap[k] > DEBOUNCE_MS * 6) delete debounceMap[k];
   }
+  saveDebounce(debounceMap);
 
   // Detect formatter/linter from package.json scripts
   const cwd = process.cwd();
@@ -117,7 +136,10 @@ function runWithTimeout(tool, filePath, cwd, timeoutSec) {
     // full lint will run but output will still be useful feedback.
     const parts = tool.split(/\s+/);
     const cmd = parts[0];
-    const args = [...parts.slice(1), filePath];
+    // Per gemini-code-assist review: escape shell metacharacters in filePath
+    // to prevent command injection via paths containing ;, &, `, $, etc.
+    const safePath = '"' + filePath.replace(/(["$`\\])/g, '\\$1') + '"';
+    const args = [...parts.slice(1), safePath];
 
     let stdout = "";
     const child = spawn(cmd, args, { cwd, shell: true, timeout: timeoutSec * 1000 });

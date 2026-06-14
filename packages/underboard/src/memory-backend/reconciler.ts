@@ -57,9 +57,13 @@ export async function drainSyncQueue(
         .run(entry.queue_id);
       synced++;
     } catch {
+      // Per gemini-code-assist review: cap retries at 5 to prevent infinite
+      // spam on permanent failures (e.g., invalid workspace, malformed content).
       db.prepare(`
         UPDATE sync_queue
-        SET attempts = attempts + 1, last_attempt_at = datetime('now')
+        SET attempts = attempts + 1,
+            last_attempt_at = datetime('now'),
+            status = CASE WHEN attempts >= 5 THEN 'failed' ELSE 'pending' END
         WHERE id = ?
       `).run(entry.queue_id);
       failed++;

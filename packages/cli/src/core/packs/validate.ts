@@ -16,7 +16,7 @@
  * Spec: specs/006-ecosystem-parity/data-model.md §1 + contracts/packs-config.schema.json.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Pack, PackResolutionResult } from "./types.js";
 
@@ -349,8 +349,6 @@ function detectCycle(adj: Map<string, string[]>): string[] | null {
 
 /** Walk a directory recursively, returning all file paths. */
 function walkFiles(dirAbs: string): string[] {
-  // Lazy-load readdirSync to keep this module tree-shakable for non-validator callers.
-  const { readdirSync, statSync } = require("node:fs") as typeof import("node:fs");
   const out: string[] = [];
   const walk = (d: string): void => {
     let entries: string[];

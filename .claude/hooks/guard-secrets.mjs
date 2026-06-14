@@ -93,6 +93,10 @@ function extractPaths(event) {
   // Bash: command (check for secret-file references)
   if (event.tool_name === "Bash" && input.command) {
     // Check for cat/less/head/tail of secret files
+    // Per gemini-code-assist review: stripQuotes removes quote CHARS only,
+    // preserving content for secret-path matching. The old implementation
+    // replaced quoted substrings with '' which allowed bypasses like
+    // cat ".env" → cat "" (content gone, no secret match).
     const stripped = stripQuotes(input.command);
     const secretReaders = stripped.match(/\b(?:cat|less|more|head|tail|cp|mv)\s+(\S+)/gi) || [];
     for (const m of secretReaders) {
@@ -123,9 +127,11 @@ function isSecret(normalizedPath) {
 }
 
 function stripQuotes(cmd) {
-  return cmd
-    .replace(/'[^']*'/g, "''")
-    .replace(/"[^"]*"/g, '""');
+  // Remove quote CHARACTERS only, preserving the content inside them.
+  // The old implementation replaced '...' and "..." with '' and "" respectively,
+  // which allowed bypasses like cat ".env" → cat "" (secret path gone, no match).
+  // Per gemini-code-assist review: removing quote chars keeps the path visible.
+  return cmd.replace(/['"]/g, "");
 }
 
 function globToRegex(glob) {
