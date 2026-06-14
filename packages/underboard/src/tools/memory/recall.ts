@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { hybridRetrieve, type HybridResult } from "#retrieval/hybrid-retrieval.ts";
-import { embed, getEmbeddingStatus } from "#embedding/embedding-service.ts";
+import { hybridRetrieve, type HybridResult } from "#retrieval/hybrid-retrieval.js";
+import { embed, getEmbeddingStatus } from "#embedding/embedding-service.js";
 
 export interface MemoryRecallInput {
   query: string;

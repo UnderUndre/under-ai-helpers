@@ -2,6 +2,10 @@
 # Common PowerShell functions analogous to common.sh
 
 function Get-RepoRoot {
+    # PS 5.1: callers dot-source this with ErrorActionPreference 'Stop', where a
+    # 2>$null redirect on a native command throws on any stderr line. Relax it
+    # scope-locally (auto-reverts on return) and rely on $LASTEXITCODE.
+    $ErrorActionPreference = 'Continue'
     try {
         $result = git rev-parse --show-toplevel 2>$null
         if ($LASTEXITCODE -eq 0) {
@@ -21,7 +25,8 @@ function Get-CurrentBranch {
         return $env:SPECIFY_FEATURE
     }
     
-    # Then check git if available
+    # Then check git if available (PS 5.1: relax EAP so 2>$null can't throw)
+    $ErrorActionPreference = 'Continue'
     try {
         $result = git rev-parse --abbrev-ref HEAD 2>$null
         if ($LASTEXITCODE -eq 0) {
@@ -59,6 +64,8 @@ function Get-CurrentBranch {
 }
 
 function Test-HasGit {
+    # PS 5.1: relax EAP so 2>$null can't throw on git's stderr
+    $ErrorActionPreference = 'Continue'
     try {
         git rev-parse --show-toplevel 2>$null | Out-Null
         return ($LASTEXITCODE -eq 0)

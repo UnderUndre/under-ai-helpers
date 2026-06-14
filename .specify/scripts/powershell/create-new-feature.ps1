@@ -11,6 +11,17 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+# Windows PowerShell 5.1: a 2>$null redirect on a native command wraps every
+# stderr line in a NativeCommandError record, and under ErrorActionPreference
+# 'Stop' that throws even when git succeeds (git writes informational messages
+# such as "Switched to a new branch ..." to stderr). Run git with the
+# preference relaxed (scope-local, auto-reverts) and rely on $LASTEXITCODE.
+function Invoke-GitQuiet {
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$GitArgs)
+    $ErrorActionPreference = 'Continue'
+    git @GitArgs 2>$null
+}
+
 # Show help if requested
 if ($Help) {
     Write-Host "Usage: ./create-new-feature.ps1 [-Json] [-ShortName <name>] [-Number N] <feature description>"
@@ -85,7 +96,7 @@ function Get-HighestNumberFromBranches {
     
     $highest = 0
     try {
-        $branches = git branch -a 2>$null
+        $branches = Invoke-GitQuiet 'branch' '-a'
         if ($LASTEXITCODE -eq 0) {
             foreach ($branch in $branches) {
                 # Clean branch name: remove leading markers and remote prefixes
@@ -112,7 +123,7 @@ function Get-NextBranchNumber {
 
     # Fetch all remotes to get latest branch info (suppress errors if no remotes)
     try {
-        git fetch --all --prune 2>$null | Out-Null
+        Invoke-GitQuiet 'fetch' '--all' '--prune' | Out-Null
     } catch {
         # Ignore fetch errors
     }
@@ -142,7 +153,7 @@ if (-not $fallbackRoot) {
 }
 
 try {
-    $repoRoot = git rev-parse --show-toplevel 2>$null
+    $repoRoot = Invoke-GitQuiet 'rev-parse' '--show-toplevel'
     if ($LASTEXITCODE -eq 0) {
         $hasGit = $true
     } else {
@@ -250,7 +261,7 @@ if ($branchName.Length -gt $maxBranchLength) {
 if ($hasGit) {
     $branchCreated = $false
     try {
-        git checkout -b $branchName 2>$null | Out-Null
+        Invoke-GitQuiet 'checkout' '-b' $branchName | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $branchCreated = $true
         }
@@ -260,7 +271,7 @@ if ($hasGit) {
 
     if (-not $branchCreated) {
         # Check if branch already exists
-        $existingBranch = git branch --list $branchName 2>$null
+        $existingBranch = Invoke-GitQuiet 'branch' '--list' $branchName
         if ($existingBranch) {
             Write-Error "Error: Branch '$branchName' already exists. Please use a different feature name or specify a different number with -Number."
             exit 1

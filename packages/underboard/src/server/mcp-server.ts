@@ -1,19 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import type { Server } from "node:http";
 import Database from "better-sqlite3";
-import { memoryWrite } from "#tools/memory/write.ts";
-import { memoryRecall } from "#tools/memory/recall.ts";
-import { memoryListRecent } from "#tools/memory/list-recent.ts";
-import { memoryGet } from "#tools/memory/get.ts";
-import { memoryDelete } from "#tools/memory/delete.ts";
-import { taskCreate } from "#tools/tasks/create.ts";
-import { taskUpdate } from "#tools/tasks/update.ts";
-import { taskList } from "#tools/tasks/list.ts";
-import { taskListAssigned } from "#tools/tasks/list-assigned.ts";
-import { taskArchive } from "#tools/tasks/archive.ts";
-import { detectProject } from "#project/detector.ts";
-import { upsertProject } from "#storage/project-store.ts";
+import { memoryWrite } from "#tools/memory/write.js";
+import { memoryRecall } from "#tools/memory/recall.js";
+import { memoryListRecent } from "#tools/memory/list-recent.js";
+import { memoryGet } from "#tools/memory/get.js";
+import { memoryDelete } from "#tools/memory/delete.js";
+import { taskCreate } from "#tools/tasks/create.js";
+import { taskUpdate } from "#tools/tasks/update.js";
+import { taskList } from "#tools/tasks/list.js";
+import { taskListAssigned } from "#tools/tasks/list-assigned.js";
+import { taskArchive } from "#tools/tasks/archive.js";
+import { detectProject } from "#project/detector.js";
+import { upsertProject } from "#storage/project-store.js";
 
 export interface ToolContext {
   project_id: string;
@@ -27,6 +25,8 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     version: "0.1.0",
   });
 
+  const reg = (server as any).tool.bind(server) as (name: string, desc: string, schema: any, cb: any) => void;
+
   function extractContext(extra: any): ToolContext {
     const cwd = extra?.clientInfo?.cwd ?? extra?.headers?.["x-agent-cwd"] ?? process.cwd();
     const agentName = extra?.clientInfo?.name ?? extra?.headers?.["x-agent-name"] ?? "unknown";
@@ -39,7 +39,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     };
   }
 
-  server.tool("memory_write", "Write a memory entry with dedup on content hash", {
+  reg("memory_write", "Write a memory entry with dedup on content hash", {
     content: { type: "string", description: "Memory content" },
     tags: { type: "array", items: { type: "string" }, description: "Optional tags" },
   }, async (params: any, extra: any) => {
@@ -48,7 +48,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("memory_recall", "Recall memories by semantic + lexical similarity", {
+  reg("memory_recall", "Recall memories by semantic + lexical similarity", {
     query: { type: "string", description: "Natural language query" },
     top_k: { type: "number", description: "Number of results (default 5)" },
     threshold: { type: "number", description: "Minimum score threshold (default 0.3)" },
@@ -58,7 +58,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("memory_list_recent", "List recent memory entries", {
+  reg("memory_list_recent", "List recent memory entries", {
     limit: { type: "number", description: "Max entries (default 20)" },
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
@@ -66,14 +66,14 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("memory_get", "Get a full memory entry by ID", {
+  reg("memory_get", "Get a full memory entry by ID", {
     id: { type: "string", description: "Memory entry ID" },
   }, async (params: any) => {
     const result = memoryGet(db, params);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("memory_delete", "Delete a memory entry (scoped to current project)", {
+  reg("memory_delete", "Delete a memory entry (scoped to current project)", {
     id: { type: "string", description: "Memory entry ID" },
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
@@ -81,7 +81,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("task_create", "Create a new task on the board", {
+  reg("task_create", "Create a new task on the board", {
     title: { type: "string", description: "Task title" },
     description: { type: "string", description: "Optional description" },
     status: { type: "string", description: "Status (backlog/in_progress/blocked/review/done)" },
@@ -93,7 +93,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("task_update", "Update an existing task", {
+  reg("task_update", "Update an existing task", {
     id: { type: "string", description: "Task ID" },
     title: { type: "string", description: "New title" },
     description: { type: "string", description: "New description" },
@@ -106,7 +106,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("task_list", "List tasks with filters", {
+  reg("task_list", "List tasks with filters", {
     status: { type: "string", description: "Filter by status" },
     assignee: { type: "string", description: "Filter by assignee" },
     search: { type: "string", description: "Search in title" },
@@ -119,7 +119,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("task_list_assigned", "List tasks assigned to calling agent", {
+  reg("task_list_assigned", "List tasks assigned to calling agent", {
     status: { type: "string", description: "Filter by status" },
     include_archived: { type: "boolean", description: "Include archived" },
   }, async (params: any, extra: any) => {
@@ -128,7 +128,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
-  server.tool("task_archive", "Archive a task", {
+  reg("task_archive", "Archive a task", {
     id: { type: "string", description: "Task ID" },
   }, async (params: any) => {
     const result = taskArchive(db, params);
@@ -139,5 +139,5 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
 }
 
 export function registerTool(server: McpServer, name: string, description: string, schema: any, handler: any) {
-  server.tool(name, description, schema, handler);
+  (server as any).tool(name, description, schema, handler);
 }

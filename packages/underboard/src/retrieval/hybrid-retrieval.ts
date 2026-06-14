@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { lexicalSearch } from "./lexical.ts";
-import { semanticSearch, semanticSearchJS } from "./semantic.ts";
+import { lexicalSearch } from "./lexical.js";
+import { semanticSearch, semanticSearchJS } from "./semantic.js";
 
 export interface HybridResult {
   id: string;
