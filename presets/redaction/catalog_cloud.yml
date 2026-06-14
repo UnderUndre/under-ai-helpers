@@ -1,0 +1,32 @@
+# Redaction Catalog: Cloud Provider Secrets (feature 007 FR-004)
+version: "2026.06.1"
+
+rules:
+  - id: aws-access-key-id
+    description: AWS access key ID (20-char alphanumeric starting with AKIA/ASIA/AGPA/AROA/AIDA/ANPA/ANVA/ABIA/ACCA)
+    pattern: '\b(AKIA|ASIA|AGPA|AROA|AIDA|ANPA|ANVA|ABIA|ACCA)[A-Z0-9]{16}\b'
+    action: redact
+    replacement: '[REDACTED:aws-access-key-id]'
+
+  - id: aws-secret-access-key
+    description: AWS secret access key (40-char base64) — high-FP; allowlist recommended
+    pattern: '\b[A-Za-z0-9/+=]{40}\b'
+    action: hash
+
+  - id: gcp-service-account-key
+    description: GCP service account private key block
+    pattern: '"type":\s*"service_account"'
+    action: redact
+
+  - id: azure-connection-string
+    description: Azure storage connection string
+    pattern: 'DefaultEndpointsProtocol=https?;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/=]+'
+    action: redact
+
+allowlist:
+  - path: tests/**
+    rule_ids: [aws-access-key-id]
+    reason: AWS docs canonical example AKIAIOSFODNN7EXAMPLE
+  - pattern_context: EXAMPLE$
+    rule_ids: [aws-access-key-id, aws-secret-access-key]
+    reason: AWS docs canonical examples

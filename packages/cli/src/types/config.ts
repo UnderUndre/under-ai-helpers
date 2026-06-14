@@ -16,6 +16,12 @@ export interface HelpersConfig {
    * Schema source of truth: specs/006-ecosystem-parity/contracts/packs-config.schema.json
    */
   packs?: PacksConfig;
+
+  /**
+   * Dialog capture configuration (feature 007).
+   * Optional: when absent, dialog capture is disabled.
+   */
+  dialogs?: DialogCaptureConfig;
 }
 
 export interface TargetConfig {
@@ -84,5 +90,34 @@ export interface PackDefinition {
   payload?: string[];
   /** Cross-pack dependency ids. Must form a DAG (validator invariant I5). */
   dependsOn?: string[];
+}
+
+/**
+ * Dialog capture configuration (feature 007).
+ * Per-repo flags controlling the CC session transcript capture pipeline.
+ */
+export interface DialogCaptureConfig {
+  /** Master switch. Default: "on". When "off", no artifacts are produced. */
+  capture?: "on" | "off";
+  /** Full opt-out for ingestion. Default: "on". When "off", no records enter spool. */
+  ingest?: "on" | "off";
+  /** Quarantine window in days (0–90). Default: 7. */
+  "ingest-delay-days"?: number;
+  /** Truncation threshold in bytes (8192–1048576). Default: 65536 (64 KiB). */
+  "normalized-max-bytes"?: number;
+  /** Retention: keep last N sessions per project. Default: 30. */
+  "keep-n-sessions"?: number;
+  /** Retention: max raw/ size in MB. Default: 500. */
+  "size-cap-mb"?: number;
+  /** Archive path for pruned raw files. Default: null (delete, rely on CC log). */
+  "archive-path"?: string | null;
+  /** Redaction catalog directory. Default: "presets/redaction/". */
+  "redaction-catalog-dir"?: string;
+  /** External scanner hook command (optional per FR-004). */
+  "external-scanner"?: string | null;
+  /** File-watch inactivity timeout in minutes. Default: 5. */
+  "inactivity-timeout-minutes"?: number;
+  /** Orphan .partial/ promotion age in minutes. Default: 60. */
+  "partial-promotion-age-minutes"?: number;
 }
 

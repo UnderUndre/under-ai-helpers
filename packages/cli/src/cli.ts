@@ -84,6 +84,7 @@ const main = defineCommand({
     fleet: () => import("./cli/fleet/index.js").then((m) => m.default),
     presets: () => import("./cli/presets.js").then((m) => m.default),
     migrate: () => import("./cli/migrate.js").then((m) => m.default),
+    dialog: () => import("./cli/dialog.js").then((m) => m.default),
   },
   setup() {
     // Handle NO_COLOR env var

@@ -1,0 +1,31 @@
+# Redaction Catalog: PII + Auth Tokens (feature 007 FR-004)
+version: "2026.06.1"
+
+rules:
+  - id: jwt-token
+    description: JWT (three base64 segments separated by dots)
+    pattern: '\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b'
+    action: redact
+
+  - id: ssh-private-key-block
+    description: PEM-encoded private key block
+    pattern: '-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----[\s\S]*?-----END (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----'
+    action: redact
+
+  - id: phone-number
+    description: E.164 or common phone format
+    pattern: '\+?\d{1,3}?[ .-]?\(?\d{1,4}?\)?[ .-]?\d{3,4}[ .-]?\d{4}\b'
+    action: redact
+
+  - id: email-address
+    description: Email address
+    pattern: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
+    action: hash
+
+allowlist:
+  - pattern_context: '@example.(com|org|net)$'
+    rule_ids: [email-address]
+    reason: RFC 2606 example domains
+  - path: '**/README.md'
+    rule_ids: [email-address]
+    reason: docs contact emails are public
