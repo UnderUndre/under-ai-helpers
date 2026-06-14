@@ -82,6 +82,8 @@ const main = defineCommand({
     recover: () => import("./cli/recover.js").then((m) => m.default),
     hermes: () => import("./cli/hermes.js").then((m) => m.default),
     fleet: () => import("./cli/fleet/index.js").then((m) => m.default),
+    presets: () => import("./cli/presets.js").then((m) => m.default),
+    migrate: () => import("./cli/migrate.js").then((m) => m.default),
   },
   setup() {
     // Handle NO_COLOR env var

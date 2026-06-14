@@ -43,6 +43,8 @@ import {
   deleteJournal,
 } from "../core/journal.js";
 import { guardMutatingCommand, releaseMutatingGuard } from "../cli.js";
+import { loadPacks } from "../core/packs/loader.js";
+import { assemble } from "../core/packs/assemble.js";
 
 export default defineCommand({
   meta: {
@@ -64,6 +66,24 @@ export default defineCommand({
       type: "boolean",
       default: false,
       description: "Pre-approve custom transformers",
+    },
+    "no-pack-validation": {
+      type: "boolean",
+      default: false,
+      description:
+        "Skip pack validator entirely (feature 006 dev-ergonomics per hermes.md F7). For incremental authoring; never use in CI/release.",
+    },
+    "pack-validation-mode": {
+      type: "string",
+      default: "ERROR",
+      description:
+        "Pack validator severity threshold: ERROR (CI/release gate, default) or WARNING (local dev surfaces issues without failing).",
+    },
+    "skip-packs": {
+      type: "boolean",
+      default: false,
+      description:
+        "Skip pack tree + marketplace.json assembly even if helpers.config.ts#packs is defined. Use when iterating on .claude/ content without touching pack layout.",
     },
   },
   async run({ args }) {
@@ -216,8 +236,20 @@ export default defineCommand({
       await deleteJournal(root);
       await cleanStaging(root);
 
+      // Feature 006: pack tree + marketplace.json assembly.
+      // Runs after target pipeline commits so a pack-assembly failure
+      // doesn't leave target outputs half-written. Pack assembly uses its
+      // own staging (separate outputDir, full overwrite via rmSync).
+      let packSummary: string | null = null;
+      if (!args["skip-packs"]) {
+        packSummary = await tryAssemblePacks(root, args);
+      } else {
+        consola.info("Skipping pack assembly (--skip-packs).");
+      }
+
+      const tail = packSummary ? ` ${packSummary}` : "";
       consola.success(
-        `Regenerated ${allRendered.length} files across ${requestedTargets.length} target(s). No lockfile written (upstream-in-place).`,
+        `Regenerated ${allRendered.length} files across ${requestedTargets.length} target(s). No lockfile written (upstream-in-place).${tail}`,
       );
     } finally {
       await releaseMutatingGuard(root, lockAcquired);
@@ -274,4 +306,44 @@ function shouldSkipDir(name: string): boolean {
     name === "build" ||
     name === ".helpers"
   );
+}
+
+/**
+ * Feature 006: load packs from helpers.config.ts and assemble the pack tree
+ * + marketplace.json. Returns a one-line summary string for the success
+ * message, or null if no packs section is defined.
+ *
+ * Validation mode comes from the --pack-validation-mode arg (default ERROR).
+ * --no-pack-validation skips validation entirely (dev flag per hermes.md F7).
+ * On validation errors, throws (caller surfaces as failure).
+ */
+async function tryAssemblePacks(
+  root: string,
+  args: Record<string, unknown>,
+): Promise<string | null> {
+  const result = await loadPacks(root, args["source-config"] as string | undefined);
+  if (result.packs.length === 0) {
+    return null; // no packs section in config — legacy flat-template mode
+  }
+
+  for (const w of result.warnings) {
+    consola.warn(`[packs] ${w}`);
+  }
+
+  const mode = (args["pack-validation-mode"] as "ERROR" | "WARNING") ?? "ERROR";
+  const skip = (args["no-pack-validation"] as boolean) === true;
+  const ownerName = (result.marketplace?.name ?? "UnderUndre").replace(/^@/, "");
+
+  const assembleResult = assemble(result, {
+    sourceDir: root,
+    ownerName,
+    validation: { mode, skip },
+    clean: true,
+  });
+
+  for (const w of assembleResult.warnings) {
+    consola.warn(`[packs] ${w}`);
+  }
+
+  return `Assembled ${assembleResult.packs.length} pack(s) → ${assembleResult.outputDir} (+ ${assembleResult.marketplacePath}).`;
 }

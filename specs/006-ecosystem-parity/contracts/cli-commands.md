@@ -31,6 +31,8 @@ helpers presets apply [--dry-run] [--only permissions|statusline]
 | Source | `presets/permissions.json`, `presets/statusline.mjs` from installed pack / upstream fetch |
 | Target | consumer `.claude/settings.json` (+ statusline script copied to `.claude/statusline.mjs`) |
 | Merge | union + dedupe of `permissions.allow`/`deny`; consumer entries never removed; `statusLine` key set only if absent (existing consumer statusline wins; `--only statusline` + explicit confirm to overwrite) |
+| **Overlap handling** (post hermes.md F2) | If a consumer `allow[]` entry overlaps a shipped `deny[]` entry → emit WARNING, list conflict, do NOT mutate `allow[]`. If a consumer `allow[]` entry overlaps a guard-hook deny (FR-005/006) → stronger WARNING pointing to the specific hook. Merge succeeds with warnings (exit 0). See data-model.md §4 "Precedence rule". |
+| **Runtime precedence** | guard hooks > deny preset > consumer allow. Guards are harness-level (non-bypassable); presets are advisory over consumer config. |
 | Idempotence | re-run on applied state = no-op, exit 0 |
 | Safety | staged write + journal (reuses `core/staging.ts`/`core/journal.ts`); `--dry-run` prints unified diff |
 

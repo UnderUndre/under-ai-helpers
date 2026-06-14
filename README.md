@@ -51,6 +51,47 @@ npx underundre-clai-helpers add-target copilot
 
 Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 
+### Plugin Marketplace (feature 006)
+
+Install curated packs from this repo's marketplace instead of the full template:
+
+```bash
+# Add the marketplace (inside Claude Code)
+/plugin marketplace add UnderUndre/under-ai-helpers
+
+# Install only what you need
+/plugin install devx-core@underundre-ai
+/plugin install spec-pipeline@underundre-ai
+/plugin install security@underundre-ai
+```
+
+**8 domain packs**: devx-core, spec-pipeline, backend, frontend, testing, security, ops, extras.
+
+### Permission Presets + Guard Hooks
+
+```bash
+# Apply permission presets (allow-list for routine ops, deny-list for secrets)
+npx underundre-clai-helpers presets apply
+
+# Preview changes
+npx underundre-clai-helpers presets apply --dry-run
+
+# Apply only statusline
+npx underundre-clai-helpers presets apply --only statusline
+```
+
+Guard hooks (`.claude/hooks/*.mjs`) auto-block destructive commands and secret reads at the harness level — no prompt needed, no bypass possible (even under `--dangerously-skip-permissions`).
+
+### Migrate from legacy full-template install
+
+```bash
+# Detect copied components, propose matching packs
+npx underundre-clai-helpers migrate --dry-run
+
+# Execute migration (interactive confirm)
+npx underundre-clai-helpers migrate
+```
+
 ### Health Check
 
 ```bash
@@ -92,14 +133,19 @@ Your custom content here. Never overwritten by sync.
 
 | Directory | Purpose |
 |-----------|---------|
-| `.claude/commands/` | Claude Code slash commands (54 commands) |
+| `.claude/commands/` | Claude Code slash commands (75 commands) |
 | `.claude/agents/` | Specialist agent definitions (27 agents) |
-| `.claude/skills/` | Reusable skill modules (44 skills) |
+| `.claude/skills/` | Reusable skill modules (43 skills) |
+| `.claude/hooks/` | Guard hooks (destructive/secret/post-edit) + advisory hooks |
 | `packages/cli/` | The `underundre-clai-helpers` npm package |
+| `packages/underboard/` | MCP memory + task board service |
+| `presets/` | Permission presets + statusline (feature 006) |
+| `packs/` | Generated pack trees for marketplace (feature 006, auto-generated) |
 | `specs/` | Feature specs, plans, contracts, tasks |
 | `.specify/` | Spec Kit pipeline: memory (constitution), scripts, templates |
 | `.github/instructions/` | Hand-written Copilot instruction files (coding, persona, project) |
 | `specs/main/` | **Canonical project architecture + requirements** (read this for deep-dive) |
+| `docs/target-capabilities.md` | Per-target native-vs-conversion skill matrix |
 
 ## Development
 
