@@ -1,0 +1,52 @@
+name: Skill Eval Gate
+
+on:
+  pull_request:
+    paths:
+      - ".claude/skills/**"
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly Monday 06:00 UTC
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  skill-evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need HEAD~1 for --changed diff
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check ANTHROPIC_API_KEY
+        id: key-check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
+              echo "::warning::ANTHROPIC_API_KEY unavailable — skill eval skipped on fork PR. Maintainer must re-run with secrets access."
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "::error::ANTHROPIC_API_KEY missing on non-fork PR — required for eval gate."
+              exit 1
+            fi
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run skill evals
+        if: steps.key-check.outputs.skip != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            node scripts/skill-evals.mjs --all
+          else
+            node scripts/skill-evals.mjs --changed
+          fi

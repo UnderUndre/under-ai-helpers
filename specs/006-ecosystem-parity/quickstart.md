@@ -67,10 +67,16 @@ node scripts/skill-evals.mjs --skill tdd-workflow
 ```bash
 npx clai-helpers regen
 git diff --exit-code                            # drift gate
-diff -r .claude/skills .agent/skills            # byte-identical (native target)
+# Per native target (per hermes.md F14 — list ALL native targets, not just .agent/):
+diff -r .claude/skills .agent/skills            # Antigravity
+diff -r .claude/skills .agents/skills           # Codex Desktop   (if T002 verified native)
+diff -r .claude/skills .gemini/skills           # Gemini CLI      (if T002 verified native)
+# For full target list + verification evidence: docs/target-capabilities.md
 ```
 
 **Verify**: native targets receive unconverted skills; `docs/target-capabilities.md` lists per-target verdict + verification evidence; `status --strict` covers `packs/` and `marketplace.json` (FR-012).
+
+> **Naming note** (per hermes.md F15): this guide uses `npx clai-helpers <subcommand>` consistently. The bare `helpers` shorthand appears in some agent prompts and tool output — treat it as an alias for `npx clai-helpers` (the npm-published CLI lives at `packages/cli/`, bin name `helpers`, npm package name `clai-helpers`).
 
 ## 7. Statusline (US6)
 

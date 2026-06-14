@@ -69,6 +69,20 @@ One harness-enforced policy entry inside a guard hook. Represented as a typed ta
 
 **Merge contract** (`helpers presets apply`): union with existing consumer lists, dedupe, never delete consumer entries, idempotent, `--dry-run` available.
 
+**Precedence rule** (added post-external-review hermes.md F2 — original spec said "MUST NOT contradict" but didn't define what happens when a consumer's existing allow-rule overlaps a deny-preset entry or a guard hook deny):
+
+```
+1. Guard hooks (FR-005/006)         — ALWAYS WIN. Harness-level, non-bypassable
+                                      (even under --dangerously-skip-permissions, see spec edge).
+2. Permission preset `deny[]`        — Wins over consumer `allow[]` on overlap.
+3. Consumer's existing `allow[]`     — Default-allow for routine ops; overridden by 1 or 2 on overlap.
+```
+
+`helpers presets apply` behavior on overlap:
+- If a consumer `allow[]` entry matches a pattern in the shipped `deny[]` preset → emit WARNING (not block), list the conflicting entries, point to docs on precedence. Do NOT silently mutate consumer's `allow[]`.
+- If a consumer `allow[]` entry matches a guard-hook deny pattern (FR-005/006 categories) → emit WARNING with stronger wording ("this entry is overridden by harness guard hook `guard-secrets.mjs` / `guard-destructive.mjs` at runtime").
+- The merge succeeds (exit 0) with warnings; the consumer is informed, not coerced. Idempotent on re-run.
+
 ## 5. Skill eval case
 
 `.claude/skills/<name>/evals.json`.

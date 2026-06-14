@@ -7,6 +7,8 @@
 
 ## Context
 
+**Terminology** (per external-review hermes.md F9): **Pack** = a plugin in the Claude Code marketplace format. A pack is a named, versioned, installable unit (see Key Entities). The terms are interchangeable when reading marketplace docs; this spec uses "pack" for the domain-curated content unit and "plugin" for the platform-level marketplace artifact.
+
 A June 2026 comparison of this repo against the Claude Code ecosystem (anthropics/skills, claude-plugins-official, obra/superpowers, wshobson/agents, davila7/claude-code-templates, disler/claude-code-hooks-mastery) concluded: **content coverage is ahead of the field, but distribution and enforcement infrastructure lags behind**. Six gaps, in priority order:
 
 1. No plugin/marketplace packaging — distribution is file-copying via CLI; consumers get the entire template (27 agents, ~70 commands, ~50 skills) whether they need it or not.
@@ -150,6 +152,7 @@ A developer runs sessions in any AI tool, and a `.ai/dialogs/` directory accumul
 - Eval flakiness: model nondeterminism must not produce noisy CI failures (threshold/retry policy).
 - Version skew: pack version vs CLI version vs template content version — a consumer must be able to tell which versions they run and whether they drift.
 - Marketplace install attempted from a tool that has no plugin support — clear fallback message pointing to the CLI path.
+- **`--dangerously-skip-permissions` mode** (per external-review hermes.md F4): Claude Code's escape-hatch flag bypasses the standard permission-prompt flow. Guard hooks (FR-005, FR-006, FR-007) MUST remain active even when the consumer launches CC with `--dangerously-skip-permissions`. Standing Orders are non-negotiable; the flag is documented as "skips prompts", not "skips guards". The guard hook contract (contracts/guard-hook-io.md) specifies PreToolUse + PostToolUse event interception which fires regardless of permission mode.
 
 ## Requirements *(mandatory)*
 
@@ -163,7 +166,7 @@ A developer runs sessions in any AI tool, and a `.ai/dialogs/` directory accumul
 - **FR-006**: Secret-file read attempts (Standing Order #7 categories: env files, key material) MUST be denied at harness level.
 - **FR-007**: Completed file modifications MUST trigger automated format/lint feedback at harness level without user request.
 - **FR-008**: The template MUST ship permission presets: an allow-list covering routine read-only project operations and a deny-list covering secrets and destructive operations.
-- **FR-009**: Skill trigger evals (representative phrase → expected skill activation) MUST gate CI for every new or modified skill from this feature's release onward; the top-10 most-used existing skills MUST be backfilled within this feature. Full catalog coverage is a tracked follow-up milestone. CI MUST fail when an eval regresses.
+- **FR-009**: Skill trigger evals (representative phrase → expected skill activation) MUST gate CI for every new or modified skill from this feature's release onward; the top-10 most-used existing skills MUST be backfilled within this feature. Full catalog coverage is a tracked follow-up milestone. CI MUST fail when an eval regresses. *(Calibration note per hermes.md F12: the eval runner uses a Haiku-class model for cost control on every PR; production skill triggering uses Sonnet/Opus. A monthly scheduled job MUST run the eval suite against a frozen subset of the catalog using the production model class and diff results vs the Haiku baseline to detect routing drift between model classes. The monthly diff is a tracked signal, not a release gate.)*
 - **FR-010**: Skills MUST be delivered unchanged (open SKILL.md standard) to targets with native support; format conversion MUST be retained only for targets lacking native support.
 - **FR-011**: A statusline preset (model, branch, context usage) MUST be shipped as an installable component.
 - **FR-012**: The strict drift check MUST cover all new artifact classes introduced by this feature (pack manifests, guard rules, permission presets, eval definitions, statusline preset).
@@ -188,7 +191,7 @@ A developer runs sessions in any AI tool, and a `.ai/dialogs/` directory accumul
 - **SC-002**: 100% of scripted Standing-Order-violation attempts (destructive commands, bypass flags, secret reads) are blocked in the test suite — versus 0% harness-enforced today.
 - **SC-003**: Context footprint of installed configuration for a single-pack consumer is at least 50% smaller than today's full-template install.
 - **SC-004**: At release: 100% of new/changed skills are eval-gated and the top-10 most-used skills have passing trigger evals; 100% catalog coverage reached by the follow-up milestone.
-- **SC-005**: The number of maintained format-conversion paths for skills drops by at least half.
+- **SC-005** *(revised post-external-review hermes.md F1 — original "drops by at least half" was a phantom baseline; research.md R6 honestly records zero skill-conversion transformers exist today, so halving zero is meaningless)*: 100% of targets marked `skillsNative: true` in the capability matrix receive skills via the `identity` pipeline (zero conversion transformers for native-capable targets). Legacy conversion paths remain ONLY for targets marked `skillsNative: false`. No new skill-conversion transformer is introduced by this feature. Measured by: `packages/cli/src/transformers/registry.ts` audit + capability matrix cross-check.
 - **SC-006**: Permission prompts during a scripted routine dev session drop by at least 70% with presets installed.
 - **SC-007**: At release, `.ai/dialogs/` is initialized, documented in CLAUDE.md (log-layer rule), and INDEX.md template exists; raw-layer infrastructure (Claude Code hok + normalization script) is backlog (milestone: 007-dialog-capture).
 

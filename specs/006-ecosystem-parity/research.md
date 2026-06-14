@@ -27,7 +27,7 @@ Resolves all NEEDS CLARIFICATION items and records design decisions with alterna
 - *marketplace.json `source` pointing at subpaths of `.claude/` directly* — impossible to partition: plugin source root defines component discovery; `.claude/` is one monolith. Partitioning requires physical pack dirs.
 - *npm-only distribution of packs* — misses the entire point of US1; `/plugin` UX is the ecosystem norm for Claude Code.
 
-⚠️ verify at implementation: exact `marketplace.json` / `plugin.json` field set against current Claude Code docs (format added Oct 2025, fields may have grown). Empirical verification against installed app is repo precedent (see helpers.config.ts comments on Antigravity/Codex).
+✅ RESOLVED 2026-06-14 (T002 probe): `marketplace.json` / `plugin.json` field set confirmed against [CC marketplace docs](https://docs.anthropic.com/en/docs/claude-code/plugin-marketplaces). Schema captured in `docs/target-capabilities.md` §"Claude Code". `marketplace.json` requires `name`, `owner{name,email?}`, `plugins[]`; plugin entries accept `name`, `source` (string relative path OR object with `source` enum: `github`/`url`/`git-subdir`/`npm` + fields), `description`, `version`, `author`, `displayName`, `homepage`, `repository`, `license`, `keywords`, `category`, `tags`, `strict`, `defaultEnabled`, `commands`, `agents`, `hooks`, `mcpServers`, `lspServers`, `skills`. Optional `metadata.pluginRoot` for path-prefix shorthand. `.claude-plugin/plugin.json` per-plugin: `name`, `description`, `version`, `author{name,email?}`, `homepage`, `repository`, `license`.
 
 ## R2. Pack partitioning
 
@@ -111,7 +111,7 @@ Current reality check (from `helpers.config.ts`): skills today only mirror to `.
 
 **Decision**: `presets/statusline.mjs` — Node script reading the statusline stdin JSON, printing one line: `<model> | <git branch> | ctx <used>%`. Installed by `helpers presets apply` writing `statusLine: { type: "command", command: "node .claude/statusline.mjs" }` into consumer settings (same merge machinery as R4). Carried in `devx-core` pack as payload.
 
-⚠️ verify at implementation: exact stdin JSON field names for model/context usage in current Claude Code (schema has been extended several times; branch is derivable via `git` directly if absent).
+⚠️ PARTIALLY RESOLVED 2026-06-14 (T002 probe): exact stdin JSON field names for statusline still DEFERRED — not covered in CC plugins/marketplaces docs. Branch is derivable via `git rev-parse --abbrev-ref HEAD` directly. Model/context-usage field names need runtime probe against local CC install (T032 first task). `docs/target-capabilities.md` V3 records the open question.
 
 **Alternative rejected**: *bash statusline* — same cross-platform argument as R3.
 

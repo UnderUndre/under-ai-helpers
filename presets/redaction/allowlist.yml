@@ -1,0 +1,19 @@
+# Allowlist entries for legitimate contexts (feature 007 FR-004)
+# Add entries here to suppress false positives without modifying the catalog rules.
+
+entries:
+  - path: tests/**
+    rule_ids: [aws-access-key-id, jwt-token, ssh-private-key-block]
+    reason: Test fixtures and mock data
+
+  - pattern_context: EXAMPLE
+    rule_ids: [aws-access-key-id]
+    reason: AWS docs canonical example
+
+  - pattern_context: '@example.com'
+    rule_ids: [email-address]
+    reason: RFC 2606 example domain
+
+  - path: '**/*.example.*'
+    rule_ids: [aws-access-key-id, aws-secret-access-key]
+    reason: Example files with documented mock secrets
