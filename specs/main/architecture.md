@@ -89,16 +89,19 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | Path | What |
 |------|------|
 | `src/server/` | MCP server (stdio + SSE transport), HTTP server (dashboard + health), tool registry. |
-| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event. Migrations. sqlite-vec + FTS5 for retrieval. |
-| `src/embedding/` | ONNX Runtime wrapper + all-MiniLM-L6-v2 model auto-download. |
-| `src/retrieval/` | Hybrid retrieval: BM25 (FTS5) + cosine (sqlite-vec) score fusion. |
+| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event, sync_queue, tombstones. Migrations. FTS5 for lexical retrieval. |
+| `src/memory-backend/` | Pluggable memory backend boundary: `MemoryBackend` interface, `HonchoBackend` (REST semantic), `LocalLexicalBackend` (FTS5 fallback), `BackendFactory`, reconciler. |
+| `src/retrieval/` | Lexical retrieval only: BM25 (FTS5). Semantic search delegated to Honcho backend. |
 | `src/project/` | CWD → project ID detector (Git root / `.under-project` marker). |
 | `src/events/` | In-process event bus for SSE push to dashboard clients. |
-| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, delete), tasks (create, update, list, assigned, archive), activity log. |
+| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, get, delete, deep-recall), tasks (create, update, list, assigned, archive), activity log. |
 | `src/cli/` | Commander CLI: start, stop, status, export, import. |
 | `dashboard/` | Static HTML/CSS/JS SPA (vanilla, no build step). Kanban board, memory feed, activity log. |
 | `tests/` | Unit + integration tests (vitest). |
-| Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts. |
+| Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts (005 original). |
+| Spec: `specs/008-memory-backend-honcho/` | Backend seam + Honcho integration spec, plan, data model, contracts (008). |
+
+**Backend dependency**: Honcho v3.0.9 (self-hosted Docker stack: Postgres 16 + pgvector, Redis 7, TEI embed + rerank). Local FTS5 serves as permanent offline fallback. ONNX Runtime and sqlite-vec removed (008).
 
 ## 6. SpecKit Integration
 
@@ -170,17 +173,22 @@ Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --ex
            │  └────────┬────────┘│
            │           │          │
            │  ┌────────┴────────┐│
-           │  │ Storage Layer   ││
-           │  │ (SQLite + vec   ││
-           │  │  + FTS5)        ││
-           │  └────────┬────────┘│
-           │           │          │
-           │  ┌────────┴────────┐│
-           │  │ Embedding Svc   ││
-           │  │ (ONNX Runtime   ││
-           │  │  MiniLM)        ││
-           │  └─────────────────┘│
-           └──────────┬──────────┘
+           │  │ MemoryBackend   ││
+           │  │ (interface)     ││
+           │  └───┬─────────┬───┘│
+           │      │         │    │
+           │ ┌────┴───┐ ┌──┴────┴──┐
+           │ │Honcho  │ │Local     ││
+           │ │Backend │ │Lexical   ││
+           │ │(REST)  │ │(FTS5)   ││
+           │ └───┬────┘ └──┬──────┘│
+           │     │         │       │
+           │ ┌───┴─────┐  ┌┴──────┐│
+           │ │SQLite   │  │SQLite ││
+           │ │+sync_q  │  │memory ││
+           │ │+tombstn │  │entries││
+           │ └─────────┘  └───────┘│
+           └──────────┬───────────┘
                       │
               ┌───────┴───────┐
               │  Event Bus    │
@@ -192,9 +200,17 @@ Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --ex
               │   Dashboard   │
               │   (browser)   │
               └───────────────┘
+
+External (REST over localhost):
+           ┌─────────────────────┐
+           │  Honcho v3 (Docker) │
+           │  Postgres + pgvector│
+           │  TEI embed + rerank │
+           │  Redis 7            │
+           └─────────────────────┘
 ```
 
-Single-user, localhost-only, offline-first. SQLite file at `~/.underboard/data.db`.
+Single-user, localhost-only. Semantic tier = Honcho REST. Offline = local FTS5 lexical fallback. SQLite file at `~/.underboard/data.db`.
 
 ## 11. See Also
 
