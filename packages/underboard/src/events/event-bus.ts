@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { ServerResponse } from "node:http";
 import Database from "better-sqlite3";
-import { insertEvent, getEventsAfter, type EventRow } from "#storage/event-store.js";
+import { insertEvent, getEventsAfter, getLatestEventId, type EventRow } from "#storage/event-store.ts";
 
 export interface SseClient {
   id: string;

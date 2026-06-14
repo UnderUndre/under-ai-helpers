@@ -27,20 +27,16 @@ export async function checkApiKeys(): Promise<HealthCheck> {
   const hasZhipu = !!process.env[ZHIPU_ENV];
   const hasGlm = !!process.env[GLM_ENV];
 
-  let zhipuGlmStatus: "pass" | "warn" | "fail";
   let zhipuGlmDetail: string;
 
   if (hasZhipu && hasGlm) {
-    zhipuGlmStatus = "pass";
     zhipuGlmDetail = "ZHIPU + GLM keys present";
   } else if (hasZhipu || hasGlm) {
     const which = hasZhipu ? "ZHIPU" : "GLM";
     const whichMissing = hasZhipu ? "GLM" : "ZHIPU";
-    zhipuGlmStatus = "warn";
     zhipuGlmDetail = `Only ${which} key present (${whichMissing} missing)`;
     missing.push(`ZHIPU/GLM (${whichMissing})`);
   } else {
-    zhipuGlmStatus = "fail";
     zhipuGlmDetail = "Neither ZHIPU nor GLM key present";
     missing.push("ZHIPU/GLM");
     hasAnyCriticalFail = true;

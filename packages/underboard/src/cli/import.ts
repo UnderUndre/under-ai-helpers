@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import consola from "consola";
-import { createDatabase } from "#storage/database.js";
+import { createDatabase } from "#storage/database.ts";
+import { upsertProject } from "#storage/project-store.ts";
+import type { ProjectInfo } from "#project/detector.ts";
 
 export async function importData(inputPath: string): Promise<void> {
   const raw = fs.readFileSync(inputPath, "utf-8");

@@ -4,12 +4,15 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import consola from "consola";
 import Database from "better-sqlite3";
-import { createMcpServer } from "./mcp-server.js";
-import { getOrCreateToken, validateBearerToken } from "./auth.js";
-import { createEventBus, type SseClient } from "#events/event-bus.js";
-import { getEmbeddingStatus } from "#embedding/embedding-service.js";
-import { initializeEmbedding } from "#embedding/embedding-service.js";
-import { createDatabase, closeDatabase } from "#storage/database.js";
+import { createMcpServer } from "./mcp-server.ts";
+import { getOrCreateToken, validateBearerToken } from "./auth.ts";
+import { createEventBus, type SseClient } from "#events/event-bus.ts";
+import { getLatestEventId } from "#storage/event-store.ts";
+import { listTasks } from "#storage/task-store.ts";
+import { listRecentMemory } from "#storage/memory-store.ts";
+import { getEmbeddingStatus } from "#embedding/embedding-service.ts";
+import { initializeEmbedding } from "#embedding/embedding-service.ts";
+import { createDatabase, closeDatabase } from "#storage/database.ts";
 
 let db: Database.Database;
 let server: http.Server;
@@ -17,7 +20,7 @@ let eventBus: ReturnType<typeof createEventBus>;
 let token: string;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DASHBOARD_DIR = path.resolve(__dirname, "../../dashboard.js");
+const DASHBOARD_DIR = path.resolve(__dirname, "../../dashboard");
 
 function corsHeaders(port: number): Record<string, string> {
   return {
@@ -27,7 +30,7 @@ function corsHeaders(port: number): Record<string, string> {
   };
 }
 
-function validateHost(req: http.IncomingMessage, _port: number): boolean {
+function validateHost(req: http.IncomingMessage, port: number): boolean {
   const host = req.headers.host;
   if (!host) return false;
   const hostWithoutPort = host.split(":")[0];
@@ -194,13 +197,13 @@ export async function startServer(options: { port: number; dbPath?: string }) {
     if (url.pathname === "/api/tasks" && req.method === "POST") {
       let body = "";
       req.on("data", (chunk) => { body += chunk; });
-      req.on("end", async () => {
+      req.on("end", () => {
         try {
           const data = JSON.parse(body);
-          const { taskCreate } = await import("#tools/tasks/create.js");
+          const { taskCreate } = await import("#tools/tasks/create.ts");
           const cwd = req.headers["x-agent-cwd"] as string ?? process.cwd();
-          const { detectProject } = await import("#project/detector.js");
-          const { upsertProject } = await import("#storage/project-store.js");
+          const { detectProject } = await import("#project/detector.ts");
+          const { upsertProject } = await import("#storage/project-store.ts");
           const project = detectProject(cwd);
           upsertProject(db, project);
           const result = taskCreate(db, data, { project_id: project.id });
@@ -219,11 +222,11 @@ export async function startServer(options: { port: number; dbPath?: string }) {
       const id = url.pathname.split("/").pop()!;
       let body = "";
       req.on("data", (chunk) => { body += chunk; });
-      req.on("end", async () => {
+      req.on("end", () => {
         try {
           const data = JSON.parse(body);
           data.id = id;
-          const { taskUpdate } = await import("#tools/tasks/update.js");
+          const { taskUpdate } = await import("#tools/tasks/update.ts");
           const result = taskUpdate(db, data);
           res.writeHead(200, { "Content-Type": "application/json", ...cors });
           res.end(JSON.stringify(result));
@@ -239,7 +242,7 @@ export async function startServer(options: { port: number; dbPath?: string }) {
     // REST API: Operator task delete
     if (url.pathname.match(/^\/api\/tasks\/[^/]+$/) && req.method === "DELETE") {
       const id = url.pathname.split("/").pop()!;
-      const { deleteTask } = await import("#storage/task-store.js");
+      const { deleteTask } = await import("#storage/task-store.ts");
       const deleted = deleteTask(db, id);
       res.writeHead(deleted ? 200 : 404, { "Content-Type": "application/json", ...cors });
       res.end(JSON.stringify({ deleted, id }));

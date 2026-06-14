@@ -2,7 +2,7 @@ import consola from "consola";
 
 export async function showStatus(): Promise<void> {
   try {
-    const { loadConfig } = await import("./config.js");
+    const { loadConfig } = await import("./config.ts");
     const config = await loadConfig();
     const res = await fetch(`http://127.0.0.1:${config.port}/health`, {
       headers: { Authorization: `Bearer ${await getToken()}` },

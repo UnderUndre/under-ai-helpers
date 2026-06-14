@@ -16,7 +16,7 @@ program
   .description("Start the Underboard service")
   .option("--port <port>", "HTTP port", "4280")
   .action(async (opts) => {
-    const { startServer } = await import("#server/http-server.js");
+    const { startServer } = await import("#server/http-server.ts");
     await startServer({ port: Number(opts.port) });
   });
 
@@ -24,7 +24,7 @@ program
   .command("stop")
   .description("Stop the running Underboard service")
   .action(async () => {
-    const { stopService } = await import("#cli/stop.js");
+    const { stopService } = await import("#cli/stop.ts");
     await stopService();
   });
 
@@ -32,7 +32,7 @@ program
   .command("status")
   .description("Check service health")
   .action(async () => {
-    const { showStatus } = await import("#cli/status.js");
+    const { showStatus } = await import("#cli/status.ts");
     await showStatus();
   });
 
@@ -42,7 +42,7 @@ program
   .command("fetch")
   .description("Download embedding model for offline use")
   .action(async () => {
-    const { fetchModel } = await import("#embedding/model-downloader.js");
+    const { fetchModel } = await import("#embedding/model-downloader.ts");
     await fetchModel();
   });
 
@@ -57,7 +57,7 @@ program
       console.error("Use --confirm to confirm memory wipe");
       process.exit(1);
     }
-    const { wipeMemory } = await import("#cli/wipe.js");
+    const { wipeMemory } = await import("#cli/wipe.ts");
     await wipeMemory();
   });
 
@@ -66,7 +66,7 @@ program
   .description("Export all data to JSON archive")
   .argument("[path]", "Output file path", "underboard-export.json")
   .action(async (path) => {
-    const { exportData } = await import("#cli/export.js");
+    const { exportData } = await import("#cli/export.ts");
     await exportData(path);
   });
 
@@ -75,7 +75,7 @@ program
   .description("Import data from JSON archive")
   .argument("<path>", "Input file path")
   .action(async (path) => {
-    const { importData } = await import("#cli/import.js");
+    const { importData } = await import("#cli/import.ts");
     await importData(path);
   });
 
@@ -86,7 +86,7 @@ program
   .description("Permanently delete a task (operator-only)")
   .argument("<id>", "Task ID")
   .action(async (id) => {
-    const { deleteTask } = await import("#cli/task-delete.js");
+    const { deleteTask } = await import("#cli/task-delete.ts");
     await deleteTask(id);
   });
 

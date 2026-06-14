@@ -1,5 +1,5 @@
 import consola from "consola";
-import { loadConfig } from "./config.js";
+import { loadConfig } from "./config.ts";
 
 export async function deleteTask(id: string): Promise<void> {
   const config = await loadConfig();

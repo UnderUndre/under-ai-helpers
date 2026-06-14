@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/UnderUndre/ai/specs/006-ecosystem-parity/skill-eval.schema.json",
+  "title": "Skill trigger eval cases (.claude/skills/<name>/evals.json)",
+  "type": "object",
+  "required": ["cases"],
+  "additionalProperties": false,
+  "properties": {
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["prompt", "expect"],
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Representative user phrase (RU or EN) that should activate the expected skill"
+          },
+          "expect": {
+            "type": "string",
+            "description": "Skill name that must be selected. Usually the owning skill; cross-skill negative cases permitted (e.g., a phrase that must NOT route here points at the correct other skill)."
+          },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$comment": "Run semantics (research R5): each case = 3 model votes against the full skill-description catalog; pass >=2/3; 2/3 logs a flake warning. CI gate set = skills changed in the PR ∪ top-10 backfill list. Runner: scripts/skill-evals.mjs, model: Haiku-class, key via ANTHROPIC_API_KEY secret (never in code/logs — Standing Order #4)."
+}

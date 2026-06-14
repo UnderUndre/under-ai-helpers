@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import type { ProjectInfo } from "#project/detector.js";
+import type { ProjectInfo } from "#project/detector.ts";
 
 export interface ProjectRow {
   id: string;

@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { listAssignedTasks, type TaskRow } from "#storage/task-store.js";
+import { listAssignedTasks, type TaskRow } from "#storage/task-store.ts";
 
 export interface ListAssignedInput {
   status?: string | string[];

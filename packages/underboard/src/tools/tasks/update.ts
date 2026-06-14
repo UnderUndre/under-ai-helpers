@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { updateTask, type TaskRow } from "#storage/task-store.js";
-import { emitEvent } from "#tools/emit-event.js";
+import { updateTask, type TaskRow } from "#storage/task-store.ts";
+import { emitEvent } from "#tools/emit-event.ts";
 
 const VALID_STATUSES = ["backlog", "in_progress", "blocked", "review", "done"];
 

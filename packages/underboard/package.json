@@ -14,16 +14,6 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "imports": {
-    "#storage/*": "./dist/storage/*",
-    "#tools/*": "./dist/tools/*",
-    "#embedding/*": "./dist/embedding/*",
-    "#retrieval/*": "./dist/retrieval/*",
-    "#project/*": "./dist/project/*",
-    "#events/*": "./dist/events/*",
-    "#server/*": "./dist/server/*",
-    "#cli/*": "./dist/cli/*"
-  },
   "files": [
     "dist",
     "dashboard"
@@ -31,7 +21,6 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/cli/index.js start",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",

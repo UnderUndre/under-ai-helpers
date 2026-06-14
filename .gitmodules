@@ -10,3 +10,6 @@
 	path = OmniRoute
 	url = git@github.com:UnderUndreGH/OmniRoute.git
 	ignore = dirty
+[submodule ".agents/marketingskills"]
+	path = .agents/marketingskills
+	url = https://github.com/coreyhaines31/marketingskills.git

@@ -24,7 +24,10 @@ Authoritative content. Edits start here.
 | `.claude/agents/` | 27+ specialist agent definitions (`backend-specialist`, `debugger`, `orchestrator`, ...). YAML frontmatter + markdown body. |
 | `.claude/skills/` | 40+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. |
 | `CLAUDE.md` | Root persona/operating instructions for Claude Code. Cross-links to coding standards, persona, and this spec. |
-| `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output). |
+| `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output) + `packs` section (pack membership mapping + marketplace metadata, feature 006). |
+| `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). |
+| `presets/` | Shippable permission preset (`permissions.json`) + statusline script (`statusline.mjs`), applied to consumer settings via `helpers presets apply` (feature 006). |
+| `.claude/skills/<name>/evals.json` | Co-located skill trigger eval cases; CI ratchet gate via `scripts/skill-evals.mjs` + `.github/workflows/skill-evals.yml` (feature 006). |
 | `.specify/` | SpecKit pipeline scripts + templates + `memory/constitution.md` (governance). |
 
 ## 3. Generated Outputs
@@ -44,6 +47,8 @@ Produced by `clai-helpers regen` (upstream) or `clai-helpers sync` (consumer). *
 | Codex Desktop / Antigravity | `AGENTS.md` (root) | `CLAUDE.md` | `identity` |
 | Speckit (mirror) | `.specify/**` | `.specify/**` | `identity` |
 | Persona phrases (opt-in) | `.github/instructions/persona/phrases/**` | self | `identity` |
+| Plugin marketplace | `.claude-plugin/marketplace.json` | `helpers.config.ts#packs` | pack assembler (feature 006) |
+| Packs (8 domain plugins) | `packs/<pack-id>/**` | `.claude/{agents,commands,skills,hooks}/**` + `presets/` per membership mapping | pack assembler, `identity` content copy (feature 006) |
 
 Pipeline registry: `packages/cli/src/transformers/registry.ts`. Adding a new AI-tool target = new transformer + entry in `helpers.config.ts` (Principle II).
 
@@ -67,8 +72,9 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 
 | Path | What |
 |------|------|
-| `src/cli/` | Subcommands: `init`, `sync`, `status`, `diff`, `regen`, `doctor`, `add-target`, `remove-target`, `remove`, `recover`, `eject`, `list-transformers`. |
-| `src/transformers/` | 7+ transformers (`identity` + `claude-to-*`). Pluggable via `registry.ts`. |
+| `src/cli/` | Subcommands: `init`, `sync`, `status`, `diff`, `regen`, `doctor`, `add-target`, `remove-target`, `remove`, `recover`, `eject`, `list-transformers`, `migrate` (legacy → packs, feature 006), `presets` (apply permission/statusline presets, feature 006). |
+| `src/transformers/` | 7+ transformers (`identity` + `claude-to-*`). Pluggable via `registry.ts`. Skill delivery is `identity` for targets with native SKILL.md support — see `docs/target-capabilities.md` (feature 006). |
+| `src/core/packs/` | Pack assembler: membership validation (existence, single ownership, cross-pack dependency DAG), pack tree + `marketplace.json` generation (feature 006). |
 | `src/core/` | Config loader (`c12`), pipeline executor, file ops, fetch (giget), hash, slots, journal, drift detection. |
 | `bin/helpers.mjs` | Binary entry point. Calls `runCli()` from `dist/cli.js`. |
 | `tests/unit/` | Unit tests (transformers, core modules, slots). |
@@ -83,16 +89,19 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | Path | What |
 |------|------|
 | `src/server/` | MCP server (stdio + SSE transport), HTTP server (dashboard + health), tool registry. |
-| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event. Migrations. sqlite-vec + FTS5 for retrieval. |
-| `src/embedding/` | ONNX Runtime wrapper + all-MiniLM-L6-v2 model auto-download. |
-| `src/retrieval/` | Hybrid retrieval: BM25 (FTS5) + cosine (sqlite-vec) score fusion. |
+| `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event, sync_queue, tombstones. Migrations. FTS5 for lexical retrieval. |
+| `src/memory-backend/` | Pluggable memory backend boundary: `MemoryBackend` interface, `HonchoBackend` (REST semantic), `LocalLexicalBackend` (FTS5 fallback), `BackendFactory`, reconciler. |
+| `src/retrieval/` | Lexical retrieval only: BM25 (FTS5). Semantic search delegated to Honcho backend. |
 | `src/project/` | CWD → project ID detector (Git root / `.under-project` marker). |
 | `src/events/` | In-process event bus for SSE push to dashboard clients. |
-| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, delete), tasks (create, update, list, assigned, archive), activity log. |
+| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, get, delete, deep-recall), tasks (create, update, list, assigned, archive), activity log. |
 | `src/cli/` | Commander CLI: start, stop, status, export, import. |
 | `dashboard/` | Static HTML/CSS/JS SPA (vanilla, no build step). Kanban board, memory feed, activity log. |
 | `tests/` | Unit + integration tests (vitest). |
-| Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts. |
+| Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts (005 original). |
+| Spec: `specs/008-memory-backend-honcho/` | Backend seam + Honcho integration spec, plan, data model, contracts (008). |
+
+**Backend dependency**: Honcho v3.0.9 (self-hosted Docker stack: Postgres 16 + pgvector, Redis 7, TEI embed + rerank). Local FTS5 serves as permanent offline fallback. ONNX Runtime and sqlite-vec removed (008).
 
 ## 6. SpecKit Integration
 
@@ -101,7 +110,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `.specify/memory/constitution.md` | Governance: principles + workflow + amendments. Loaded by `/speckit.plan` Constitution Check gate. |
 | `.specify/scripts/{powershell,bash}/` | Scripts that `/speckit.*` commands invoke. PowerShell is source of truth on Windows; bash ports for *nix parity. |
 | `.specify/templates/` | Spec / plan / tasks / checklist templates. |
-| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. |
+| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. |
 | `specs/main/` | **This directory.** Project-wide architecture + requirements (canonical, not feature-scoped). |
 
 Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage.{sh,ps1}`, idempotent via `--points-at HEAD`. `/speckit.diff` and `/speckit.retrospective` read these tags.
@@ -164,17 +173,22 @@ Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --ex
            │  └────────┬────────┘│
            │           │          │
            │  ┌────────┴────────┐│
-           │  │ Storage Layer   ││
-           │  │ (SQLite + vec   ││
-           │  │  + FTS5)        ││
-           │  └────────┬────────┘│
-           │           │          │
-           │  ┌────────┴────────┐│
-           │  │ Embedding Svc   ││
-           │  │ (ONNX Runtime   ││
-           │  │  MiniLM)        ││
-           │  └─────────────────┘│
-           └──────────┬──────────┘
+           │  │ MemoryBackend   ││
+           │  │ (interface)     ││
+           │  └───┬─────────┬───┘│
+           │      │         │    │
+           │ ┌────┴───┐ ┌──┴────┴──┐
+           │ │Honcho  │ │Local     ││
+           │ │Backend │ │Lexical   ││
+           │ │(REST)  │ │(FTS5)   ││
+           │ └───┬────┘ └──┬──────┘│
+           │     │         │       │
+           │ ┌───┴─────┐  ┌┴──────┐│
+           │ │SQLite   │  │SQLite ││
+           │ │+sync_q  │  │memory ││
+           │ │+tombstn │  │entries││
+           │ └─────────┘  └───────┘│
+           └──────────┬───────────┘
                       │
               ┌───────┴───────┐
               │  Event Bus    │
@@ -186,9 +200,17 @@ Drift check: `clai-helpers status --strict` (consumer) or `regen + git diff --ex
               │   Dashboard   │
               │   (browser)   │
               └───────────────┘
+
+External (REST over localhost):
+           ┌─────────────────────┐
+           │  Honcho v3 (Docker) │
+           │  Postgres + pgvector│
+           │  TEI embed + rerank │
+           │  Redis 7            │
+           └─────────────────────┘
 ```
 
-Single-user, localhost-only, offline-first. SQLite file at `~/.underboard/data.db`.
+Single-user, localhost-only. Semantic tier = Honcho REST. Offline = local FTS5 lexical fallback. SQLite file at `~/.underboard/data.db`.
 
 ## 11. See Also
 

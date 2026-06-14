@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { listRecentMemory, type MemoryRow } from "#storage/memory-store.js";
+import { listRecentMemory, type MemoryRow } from "#storage/memory-store.ts";
 
 export interface ListRecentInput {
   limit?: number;
