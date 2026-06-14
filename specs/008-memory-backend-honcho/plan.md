@@ -52,7 +52,7 @@ specs/008-memory-backend-honcho/
 ├── quickstart.md        # Dev setup + Honcho wiring
 ├── contracts/
 │   └── memory-backend.md # Backend interface contract
-└── tasks.md             # Phase 2 output (not created yet)
+└── tasks.md             # Task breakdown (Phase 2 output)
 ```
 
 ### Source Code (modifications to existing package)

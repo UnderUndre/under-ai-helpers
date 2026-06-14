@@ -12,7 +12,7 @@
 | T02 | Refactor `LocalLexicalBackend` from existing `memory-store.ts` + `lexical.ts` | [backend-specialist] | `src/memory-backend/local-lexical.ts`, `src/storage/memory-store.ts` | T01 | ~150 | typescript-expert |
 | T03 | Implement `HonchoClient` low-level REST client (workspace/peer/conclusion CRUD) | [backend-specialist] | `src/memory-backend/honcho-client.ts` | — | ~200 | api-patterns, typescript-expert |
 | T04 | Implement `HonchoBackend` (write + recall + delete via HonchoClient, with local dual-write) | [backend-specialist] | `src/memory-backend/honcho.ts` | T02, T03 | ~250 | api-patterns, typescript-expert |
-| T05 | Implement `BackendFactory` (config-driven selection + health check + fallback) | [backend-specialist] | `src/memory-backend/backend-factory.ts` | T02, T04 | ~80 | typescript-expert |
+| T05 | Implement `BackendFactory` (config-driven selection + health check + fallback + Honcho version pin check) | [backend-specialist] | `src/memory-backend/backend-factory.ts` | T02, T04 | ~100 | typescript-expert |
 | T06 | Wire backend into `mcp-server.ts` — inject via factory, pass to all tool functions | [backend-specialist] | `src/server/mcp-server.ts`, `src/server/http-server.ts` | T05 | ~60 | typescript-expert |
 
 ### Lane B: Sync Queue + Tombstones (P1, parallel with Lane A after T01)
@@ -21,6 +21,7 @@
 |----|------|-------|-------|---------|----------|--------|
 | T07 | Migration 002: `sync_queue` + `tombstones` tables + `sync_status` column on `memory_entries` | [database-architect] | `src/storage/migrations/002_backend_seam.sql`, `src/storage/sync-queue-store.ts`, `src/storage/tombstone-store.ts` | — | ~120 | database-design |
 | T08 | Implement reconciler (background sync queue drain → Honcho) | [backend-specialist] | `src/memory-backend/reconciler.ts` | T04, T07 | ~100 | api-patterns, typescript-expert |
+| T29 | Implement `underboard memory resync` CLI subcommand — first-activation import of existing local entries to Honcho (re-runnable, deduplicated via content-hash) | [backend-specialist] | `src/cli/resync.ts`, `src/cli/index.ts` | T04, T07 | ~60 | typescript-expert |
 
 ### Lane C: Tool Rewiring (P1, depends on Lane A)
 
@@ -68,10 +69,11 @@
 T01 ──► T02 ──► T04 ──► T05 ──► T06 ──► T09..T15 (Lane C)
          │              ▲                      │
          └──────────────┘                      ├─► T20 (P3)
-                                             T21 (P3)
+                                              T21 (P3)
 T03 ──► T04
 T07 ──► T08 ──► T26
 T07 ──► T13, T14, T15
+T04,T07 ──► T29
 
 T06 ──► T16, T17 ──► T18 ──► T19 (Lane D, parallel with C)
 
@@ -87,7 +89,7 @@ T09-T15 ──► T27, T28 (Lane F, parallel tracking)
 | Lane | Tasks | Can run parallel with |
 |------|-------|----------------------|
 | A (seam) | T01-T06 | B (T07) |
-| B (sync/tomb) | T07-T08 | A (T01-T03), F (T22) |
+| B (sync/tomb) | T07-T08, T29 | A (T01-T03), F (T22) |
 | C (tool wiring) | T09-T15 | D (T16-T19) |
 | D (demolition) | T16-T19 | C (T09-T15) |
 | E (P3) | T20-T21 | After A+C (deferred) |
@@ -107,7 +109,7 @@ T07 ──→ T08 ────────────────────�
 
 | Agent | Tasks | Total LOC | Skills to Load |
 |-------|-------|-----------|----------------|
-| [backend-specialist] | T01-T06, T08-T21 | ~900 net | api-patterns, typescript-expert |
+| [backend-specialist] | T01-T06, T08-T21, T29 | ~960 net | api-patterns, typescript-expert |
 | [database-architect] | T07 | ~120 | database-design |
 | [test-engineer] | T22-T28 | ~680 | testing-patterns, tdd-workflow, webapp-testing |
 
@@ -115,7 +117,7 @@ T07 ──→ T08 ────────────────────�
 
 ## Suggested MVP Scope
 
-**MVP = Lanes A + B + C + D (T01-T19) + Lane F tests (T22-T28)**
+**MVP = Lanes A + B + C + D (T01-T19, T29) + Lane F tests (T22-T28)**
 
 - P1 user stories (semantic recall + backend seam + demolition)
 - All 7 MCP tools registered and working
@@ -125,4 +127,4 @@ T07 ──→ T08 ────────────────────�
 
 **Post-MVP (separate PR)**: Lane E (T20-T21) — deep recall + health enhancements.
 
-**Estimated total LOC**: ~630 net new, ~390 deleted = +240 net change.
+**Estimated total LOC**: ~690 net new, ~390 deleted = +300 net change.

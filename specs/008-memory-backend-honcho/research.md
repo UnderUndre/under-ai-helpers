@@ -27,9 +27,11 @@ Workspace name = `underboard-{stable_key_prefix}` (first 16 chars of SHA-256 of 
 
 Example: project with root `/Users/dev/my-app` → workspace name `underboard-a1b2c3d4e5f67890`.
 
+**Verification needed**: the exact `WorkspaceCreate` schema field name for the workspace identifier — the OpenAPI shows `WorkspaceCreate` but the field might not be `name` (could be `workspace_id` or other). Phase 0 must probe `POST /v3/workspaces` with a test payload to confirm the request/response schema.
+
 ### Auth
 
-Honcho requires `Authorization: Bearer <token>` on all `/v3/` endpoints. Token comes from underboard config (`memory.honcho_token`), NOT from `~/.underboard/token` (that's underboard's own MCP auth).
+Honcho requires `Authorization: Bearer <token>` on all `/v3/` endpoints. Token comes from underboard config: the config key `honcho_token_env` names an environment variable (e.g., `HONCHO_API_KEY`) whose value is the actual bearer token. This is NOT `~/.underboard/token` (that's underboard's own MCP auth).
 
 ### Conclusion Schema (from OpenAPI)
 
@@ -60,9 +62,9 @@ interface Conclusion {
 
 1. Get-or-create workspace (step 1 from write).
 2. `POST /v3/workspaces/{ws}/conclusions/query` with the query.
-3. Merge with local FTS5 results (if both available) or return Honcho-only.
+3. Return Honcho results directly — no client-side fusion needed. Honcho's server-side search (pgvector + TEI rerank) replaces the old `0.4*lexical + 0.6*semantic` formula. Enrich with local provenance/tags by content-hash lookup.
 
-**Key constraint**: `conclusions/query` likely returns ranked results. Need to verify if it accepts a semantic search query (free text) and returns similarity scores.
+**Key constraint**: `conclusions/query` likely returns ranked results. Need to verify if it accepts a semantic search query (free text) and returns similarity scores. **Verification needed**: the exact response schema of `conclusions/query` (does it return `score`/`similarity` fields? what ranking signal does it use?). This is a Phase 0 blocking item — if `conclusions/query` does NOT support semantic search, we need an alternative Honcho endpoint (e.g., `workspaces/{ws}/search` which searches messages, or peer-scoped search).
 
 ### V1: Conclusion Hard-Delete
 
@@ -90,7 +92,7 @@ interface MemoryBackend {
   recall(query: RecallInput, ctx: ToolContext): Promise<RecallOutput>;
   recallCrossProject(query: RecallInput): Promise<CrossRecallOutput>;
   listRecent(input: ListRecentInput, ctx: ToolContext): Promise<ListRecentOutput>;
-  get(id: string): Promise<GetOutput>;
+  get(id: string): Promise<GetOutput | null>;
   delete(id: string, ctx: ToolContext): Promise<DeleteOutput>;
   deleteCrossProject(id: string, projectId: string): Promise<DeleteOutput>;
   health(): Promise<BackendHealth>;
@@ -116,7 +118,7 @@ interface BackendHealth {
 1. Agent calls `memory_write` → Honcho unreachable.
 2. Write accepted into local `memory_entries` with `sync_status = "pending"`.
 3. `sync_queue` table records `(memory_id, project_id, content_hash, created_at, attempts, last_error)`.
-4. Response returns `embedding_status: "pending_sync"`.
+4. Response returns `sync_status: "pending"` (added alongside the 005-compatible `embedding_status` field).
 
 **Reconciliation** (background, on recovery):
 1. `reconciler.ts` polls Honcho health every N seconds (configurable, default 10s).
@@ -151,7 +153,7 @@ All recall paths (both backends) JOIN against `tombstones` to filter deleted ent
 Refactor `retrieval/lexical.ts` into a `MemoryBackend` implementation. It:
 - Reads/writes `memory_entries` directly (same as today).
 - Uses FTS5/BM25 for recall.
-- Returns `embedding_status: "lexical_only"`.
+- Returns `embedding_status = "lexical_only"`.
 - Never touches Honcho.
 - Still supports dedup, provenance, project scoping.
 
