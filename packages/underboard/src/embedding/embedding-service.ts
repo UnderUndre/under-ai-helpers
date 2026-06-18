@@ -65,19 +65,19 @@ export async function embed(text: string): Promise<Float32Array | null> {
     for (let i = 0; i < hiddenSize; i++) {
       let sum = 0;
       for (let j = 0; j < seqLen; j++) {
-        sum += data[j * hiddenSize + i];
+        sum += data[j * hiddenSize + i]!;
       }
       result[i] = sum / seqLen;
     }
 
     let norm = 0;
     for (let i = 0; i < result.length; i++) {
-      norm += result[i] * result[i];
+      norm += result[i]! * result[i]!;
     }
     norm = Math.sqrt(norm);
     if (norm > 0) {
       for (let i = 0; i < result.length; i++) {
-        result[i] /= norm;
+        result[i]! /= norm;
       }
     }
 
@@ -102,3 +102,4 @@ function tokenize(text: string): { ids: number[]; attentionMask: number[] } {
   const attentionMask = ids.map(() => 1);
   return { ids, attentionMask };
 }
+

@@ -42,3 +42,4 @@ export function lexicalSearch(
     score: Math.min(1, Math.abs(r.rank) / maxRank),
   }));
 }
+

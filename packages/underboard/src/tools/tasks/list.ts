@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { listTasks, listAssignedTasks, type TaskRow } from "#storage/task-store.ts";
+import { listTasks, type TaskRow } from "#storage/task-store.js";
 
 export interface TaskListInput {
   status?: string | string[];
@@ -64,3 +64,4 @@ export function taskList(
     total,
   };
 }
+

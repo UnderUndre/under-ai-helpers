@@ -12,12 +12,26 @@ import { taskList } from "#tools/tasks/list.ts";
 import { taskListAssigned } from "#tools/tasks/list-assigned.ts";
 import { taskArchive } from "#tools/tasks/archive.ts";
 
+import { upsertProject } from "#storage/project-store.ts";
+
 describe("MCP Tool Contracts", () => {
   let db: Database.Database;
   const ctx = { project_id: "test-project", agent_name: "test-agent" };
 
   beforeEach(() => {
     db = createTestDb();
+    upsertProject(db, {
+      id: "test-project",
+      stableKey: "test-project",
+      displayName: "Test Project",
+      rootPath: "/tmp",
+    });
+    upsertProject(db, {
+      id: "other-project",
+      stableKey: "other-project",
+      displayName: "Other Project",
+      rootPath: "/tmp/other",
+    });
   });
 
   afterEach(() => {

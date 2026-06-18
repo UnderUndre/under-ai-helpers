@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { deleteMemoryCrossProject } from "#storage/memory-store.ts";
-import { emitEvent } from "#tools/emit-event.ts";
+import { deleteMemoryCrossProject } from "#storage/memory-store.js";
+import { emitEvent } from "#tools/emit-event.js";
 
 export interface CrossProjectDeleteInput {
   id: string;
@@ -17,3 +17,4 @@ export function memoryDeleteCrossProject(
   }
   return { deleted, id: input.id };
 }
+

@@ -61,3 +61,4 @@ export function detectProject(cwd: string): ProjectInfo {
   projectCache.set(resolvedCwd, info);
   return info;
 }
+

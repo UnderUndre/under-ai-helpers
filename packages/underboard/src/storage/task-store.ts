@@ -268,3 +268,4 @@ export function computeStalled(db: Database.Database, tasks: TaskRow[]): Array<T
     return { ...t, stalled };
   });
 }
+

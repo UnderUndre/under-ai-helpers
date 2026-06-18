@@ -189,3 +189,4 @@ export function getPendingEmbeddings(
     .all(limit) as Record<string, unknown>[];
   return rows.map(parseMemoryRow);
 }
+

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
-import { writeMemory, computeContentHash } from "#storage/memory-store.ts";
-import { emitEvent } from "#tools/emit-event.ts";
+import { writeMemory } from "#storage/memory-store.js";
+import { emitEvent } from "#tools/emit-event.js";
 
 export interface MemoryWriteInput {
   content: string;
@@ -51,3 +51,4 @@ export function memoryWrite(
     provenance: result.provenance,
   };
 }
+

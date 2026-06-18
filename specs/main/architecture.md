@@ -20,9 +20,9 @@ Authoritative content. Edits start here.
 
 | Path | What lives here |
 |------|-----------------|
-| `.claude/commands/` | 50+ Claude Code slash commands (`/speckit.*`, `/bump`, `/commit`, `/brainstorm`, ...). |
+| `.claude/commands/` | 75+ Claude Code slash commands (`/speckit.*`, `/bump`, `/commit`, `/brainstorm`, ...). |
 | `.claude/agents/` | 27+ specialist agent definitions (`backend-specialist`, `debugger`, `orchestrator`, ...). YAML frontmatter + markdown body. |
-| `.claude/skills/` | 40+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. |
+| `.claude/skills/` | 43+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. |
 | `CLAUDE.md` | Root persona/operating instructions for Claude Code. Cross-links to coding standards, persona, and this spec. |
 | `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output) + `packs` section (pack membership mapping + marketplace metadata, feature 006). |
 | `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). Plus `dialog-capture.mjs` — Stop-hook wrapper that spawns the dialog-capture pipeline (feature 007). |
@@ -117,15 +117,6 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `specs/main/` | **This directory.** Project-wide architecture + requirements (canonical, not feature-scoped). |
 
 Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage.{sh,ps1}`, idempotent via `--points-at HEAD`. `/speckit.diff` and `/speckit.retrospective` read these tags.
-
-## 7. Submodules
-
-| Path | Purpose |
-|------|---------|
-| `underproxy/` | Service orchestration & proxying (separate repo). |
-| `undrllai/` | Core AI integration logic (separate repo). |
-
-`.gitmodules` has `ignore = dirty` to suppress working-tree noise; pointer drift still surfaces. Changes inside submodules belong in the submodule's own commits — not the parent repo (except pointer bumps).
 
 ## 8. Other AI-Tool Directories
 

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
-import { createTask, type TaskRow } from "#storage/task-store.ts";
-import { emitEvent } from "#tools/emit-event.ts";
+import { createTask, type TaskRow } from "#storage/task-store.js";
+import { emitEvent } from "#tools/emit-event.js";
 
 const VALID_STATUSES = ["backlog", "in_progress", "blocked", "review", "done"] as const;
 const MAX_TITLE_LENGTH = 1000;
@@ -95,3 +95,4 @@ export function taskCreate(
   if (warnings.length > 0) output.warnings = warnings;
   return output;
 }
+

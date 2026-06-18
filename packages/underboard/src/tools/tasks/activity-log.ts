@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
-import { emitEvent } from "#tools/emit-event.ts";
+import { emitEvent } from "#tools/emit-event.js";
 
 export function activityLogStart(
   db: Database.Database,
   input: { task_id: string },
-  context: { agent_name: string }
+  _context: { agent_name: string }
 ): { logging: boolean; task_id: string } {
   const task = db.prepare("SELECT id FROM tasks WHERE id = ?").get(input.task_id);
   if (!task) {
@@ -67,3 +67,4 @@ export function activityLogGet(
 
   return { entries: rows };
 }
+

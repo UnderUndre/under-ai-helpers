@@ -11,12 +11,13 @@ A collection of prompts, agents, skills, and a CLI tool for AI-assisted developm
 .github/          # Copilot prompts & instructions (auto-generated)
 .gemini/          # Gemini commands & agents (auto-generated)
 packages/cli/     # CLI tool that does the transpilation
+packages/underboard/ # MCP memory + task board service
 specs/            # Feature specifications and design docs
 ```
 
 ## CLI Tool: `underundre-clai-helpers`
 
-The core of this repo. Treats `.claude/` as the single source of truth and transpiles it into Copilot and Gemini formats.
+The core of this repo. Treats `.claude/` as the single source of truth and transpiles it into Copilot, Gemini, and Antigravity formats.
 
 ### Install in your project
 
@@ -51,7 +52,7 @@ npx underundre-clai-helpers add-target copilot
 
 Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 
-### Plugin Marketplace (feature 006)
+### Plugin Marketplace
 
 Install curated packs from this repo's marketplace instead of the full template:
 
@@ -80,7 +81,7 @@ npx underundre-clai-helpers presets apply --dry-run
 npx underundre-clai-helpers presets apply --only statusline
 ```
 
-Guard hooks (`.claude/hooks/*.mjs`) auto-block destructive commands and secret reads at the harness level — no prompt needed, no bypass possible (even under `--dangerously-skip-permissions`).
+Guard hooks (`.claude/hooks/*.mjs`) auto-block destructive commands and secret reads at the harness level.
 
 ### Migrate from legacy full-template install
 
@@ -108,14 +109,25 @@ npx underundre-clai-helpers hermes --from-file file.txt  # From file
 npx underundre-clai-helpers hermes --background "prompt" # Detached mode
 ```
 
+## Underboard: Memory & Tasks
+
+A standalone MCP tool server that gives your agents shared state and long-term memory.
+
+- **Task Board**: Kanban-style task management for agents. Prevents duplicate work in multi-agent sessions.
+- **Semantic Memory**: Powered by Honcho v3 (semantic primary) with local FTS5 fallback (lexical tier).
+- **Dialog Capture**: Phase 2 of the ingestion pipeline. Automatically captures, normalizes, and redacts conversations for long-term recall.
+- **Dashboard**: Local web UI to visualize active tasks and the memory feed.
+
+See [packages/underboard/README.md](packages/underboard/README.md) for setup.
+
 ## What Gets Synced
 
-| Source (`.claude/`) | Copilot (`.github/`) | Gemini (`.gemini/`) |
-|---------------------|----------------------|---------------------|
-| `commands/*.md` | `prompts/*.prompt.md` | `commands/*.toml` |
-| `agents/*.md` | `instructions/*.instructions.md` | `agents/*.md` |
-| `CLAUDE.md` | `copilot-instructions.md` | `GEMINI.md` |
-| `skills/**/*` | -- (Claude-specific) | -- (Claude-specific) |
+| Source (`.claude/`) | Copilot (`.github/`) | Gemini (`.gemini/`) | Antigravity (`.agent/`) |
+|---------------------|----------------------|---------------------|-------------------------|
+| `commands/*.md` | `prompts/*.prompt.md` | `commands/*.toml` | `workflows/*.md` |
+| `agents/*.md` | `instructions/*.instructions.md` | `agents/*.md` | `agents/*.md` |
+| `CLAUDE.md` | `copilot-instructions.md` | `GEMINI.md` | `AGENTS.md` |
+| `skills/**/*` | -- (Claude-specific) | -- (Claude-specific) | `skills/**/*` |
 
 7 built-in transformers handle the format conversion. Custom transformers can be added for other targets (Cursor, Windsurf, etc.).
 

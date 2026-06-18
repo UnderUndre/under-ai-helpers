@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { embed, getEmbeddingStatus } from "./embedding-service.ts";
-import { getPendingEmbeddings, updateEmbedding } from "#storage/memory-store.ts";
+import { embed, getEmbeddingStatus } from "./embedding-service.js";
+import { getPendingEmbeddings, updateEmbedding } from "#storage/memory-store.js";
 import consola from "consola";
 
 export async function runBackfill(db: Database.Database, intervalMs: number = 5000): Promise<() => void> {
@@ -42,3 +42,4 @@ export async function runBackfill(db: Database.Database, intervalMs: number = 50
     consola.info("Embedding backfill worker stopped");
   };
 }
+

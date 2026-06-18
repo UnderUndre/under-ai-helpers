@@ -90,3 +90,4 @@ export function createDatabase(dbPath?: string): Database.Database {
 export function closeDatabase(db: Database.Database): void {
   db.close();
 }
+

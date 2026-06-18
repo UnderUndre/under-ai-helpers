@@ -16,7 +16,15 @@ describe("Export/Import", () => {
   it("roundtrips data through export and import", async () => {
     const { memoryWrite } = await import("#tools/memory/write.ts");
     const { taskCreate } = await import("#tools/tasks/create.ts");
+    const { upsertProject } = await import("#storage/project-store.ts");
     const ctx = { project_id: "export-test", agent_name: "test" };
+
+    upsertProject(db, {
+      id: "export-test",
+      stableKey: "export-test",
+      displayName: "Export Test",
+      rootPath: "/tmp/export",
+    });
 
     memoryWrite(db, { content: "Exported fact" }, ctx);
     taskCreate(db, { title: "Exported task" }, ctx);
@@ -30,6 +38,11 @@ describe("Export/Import", () => {
     expect(memory).toHaveLength(1);
 
     const db2 = createTestDb();
+    const insertProject = db2.prepare("INSERT OR IGNORE INTO projects (id, stable_key, display_name, root_path, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)");
+    for (const p of projects as any[]) {
+      insertProject.run(p.id, p.stable_key, p.display_name, p.root_path, p.first_seen, p.last_seen);
+    }
+
     const insertTask = db2.prepare("INSERT OR IGNORE INTO tasks (id, project_id, title, description, status, assignee, dependency_ids, notes, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     for (const t of tasks) {
       insertTask.run(t.id, t.project_id, t.title, t.description, t.status, t.assignee, t.dependency_ids, t.notes, t.archived, t.created_at, t.updated_at);

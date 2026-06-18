@@ -15,3 +15,4 @@ export async function stopService(): Promise<void> {
     consola.error("No running underboard service found");
   }
 }
+

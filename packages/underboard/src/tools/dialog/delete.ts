@@ -53,3 +53,4 @@ export async function handleDialogDelete(
 
   return { deleted: true, session_uuid: sessionId || "(unknown)" };
 }
+

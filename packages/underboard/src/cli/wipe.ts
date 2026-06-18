@@ -1,5 +1,5 @@
 import consola from "consola";
-import { createDatabase } from "#storage/database.ts";
+import { createDatabase } from "#storage/database.js";
 
 export async function wipeMemory(): Promise<void> {
   const db = createDatabase();
@@ -8,3 +8,4 @@ export async function wipeMemory(): Promise<void> {
   consola.success(`Wiped ${result.changes} memory entries`);
   db.close();
 }
+

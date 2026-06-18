@@ -1,5 +1,5 @@
 import consola from "consola";
-import { loadConfig } from "./config.ts";
+import { loadConfig } from "./config.js";
 
 export async function deleteTask(id: string): Promise<void> {
   const config = await loadConfig();
@@ -23,3 +23,4 @@ async function getToken(): Promise<string> {
   const tokenPath = path.join(os.homedir(), ".underboard", "token");
   return (await fs.readFile(tokenPath, "utf-8")).trim();
 }
+

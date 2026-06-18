@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import type { ProjectInfo } from "#project/detector.ts";
+import type { ProjectInfo } from "#project/detector.js";
 
 export interface ProjectRow {
   id: string;
@@ -58,3 +58,4 @@ export function getProjectByStableKey(
 export function getAllProjects(db: Database.Database): ProjectRow[] {
   return stmtGetAll(db).all() as ProjectRow[];
 }
+

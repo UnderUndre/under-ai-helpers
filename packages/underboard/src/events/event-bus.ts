@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { ServerResponse } from "node:http";
 import Database from "better-sqlite3";
-import { insertEvent, getEventsAfter, getLatestEventId, type EventRow } from "#storage/event-store.ts";
+import { insertEvent, getEventsAfter, type EventRow } from "#storage/event-store.js";
 
 export interface SseClient {
   id: string;
@@ -85,3 +85,4 @@ export function createEventBus(db: Database.Database): EventBus {
 export function getEventBus(): EventBus | null {
   return busInstance;
 }
+

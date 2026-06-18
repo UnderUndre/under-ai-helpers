@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import { deleteMemory } from "#storage/memory-store.ts";
-import { emitEvent } from "#tools/emit-event.ts";
+import { deleteMemory } from "#storage/memory-store.js";
+import { emitEvent } from "#tools/emit-event.js";
 
 export interface MemoryDeleteInput {
   id: string;
@@ -52,3 +52,4 @@ export function memoryDelete(
 
   return { deleted, id: input.id };
 }
+

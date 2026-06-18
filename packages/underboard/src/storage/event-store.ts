@@ -60,3 +60,4 @@ export function getEventsByType(
 ): EventRow[] {
   return byTypeStmt(db).all(type, limit) as EventRow[];
 }
+
