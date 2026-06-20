@@ -24,29 +24,59 @@ npm run build
 
 ### Claude Code
 
-Add the server to your `claude_desktop_config.json`:
+Add the server to your `claude_desktop_config.json`.
+
+You can run it globally if you have used `npm link`:
+
+```json
+{
+  "mcpServers": {
+    "underboard": {
+      "command": "underboard",
+      "args": ["start", "--port", "4284", "--stdio"]
+    }
+  }
+}
+```
+
+Or run it directly via Node using the absolute path:
 
 ```json
 {
   "mcpServers": {
     "underboard": {
       "command": "node",
-      "args": ["/path/to/under-ai-helpers/packages/underboard/dist/cli/index.js", "start"]
+      "args": [
+        "C:/Users/Admin/Documents/Repos/underhelpers/under-ai-helpers/packages/underboard/dist/cli/index.js",
+        "start",
+        "--port",
+        "4284",
+        "--stdio"
+      ]
     }
   }
 }
 ```
 
+*Note: Make sure to include the `--stdio` flag. This allows Claude Desktop to communicate with the server directly over standard input/output. Also, ensure each argument (e.g., `start`, `--port`, `4282`, `--stdio`) is a separate element in the `"args"` array. Passing them as a single string will cause the execution to fail.*
+
 ### Configuration
 
-Underboard uses `c12` for configuration. You can provide settings via environment variables or a config file:
+Underboard uses `c12` for configuration and supports `.env` files. You can provide settings via:
+
+1. Environment variables (`PORT`, `HONCHO_ENDPOINT`, etc.)
+2. A `.env` file in your current working directory
+3. The config file `~/.underboard/config.json`
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `HONCHO_ENDPOINT` | URL to your Honcho v3 instance | `http://127.0.0.1:8000` |
 | `HONCHO_TOKEN` | Bearer token for Honcho API | `undefined` |
 | `UNDERBOARD_DB_PATH` | Path to the SQLite database | `~/.underboard/data.db` |
-| `UNDERBOARD_PORT` | Port for the dashboard | `3000` |
+| `PORT` | Port for the dashboard | `4280` |
+
+> [!NOTE]
+> When starting, Underboard prioritizes `PORT` environment variable > `--port` CLI flag > `config.json` port value.
 
 ## CLI Commands
 

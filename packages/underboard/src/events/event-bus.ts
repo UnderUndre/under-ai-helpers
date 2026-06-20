@@ -1,7 +1,9 @@
 import { EventEmitter } from "node:events";
 import type { ServerResponse } from "node:http";
 import Database from "better-sqlite3";
-import { insertEvent, getEventsAfter, type EventRow } from "#storage/event-store.js";
+import { insertEvent, getEventsAfter, getLatestEventId, type EventRow } from "#storage/event-store.js";
+import { listTasks } from "#storage/task-store.js";
+import { listRecentMemoryCrossProject } from "#storage/memory-store.js";
 
 export interface SseClient {
   id: string;
@@ -27,7 +29,11 @@ class EventBus extends EventEmitter {
 
   addClient(client: SseClient): void {
     this.clients.set(client.id, client);
-    this.replayMissed(client);
+    if (client.lastEventId === 0) {
+      this.sendSnapshot(client);
+    } else {
+      this.replayMissed(client);
+    }
   }
 
   removeClient(clientId: string): void {
@@ -71,6 +77,26 @@ class EventBus extends EventEmitter {
       const data = `id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(event.payload)}\n\n`;
       client.res.write(data);
       client.lastEventId = event.id;
+    }
+  }
+
+  private sendSnapshot(client: SseClient): void {
+    const tasksData = listTasks(this.db, { archived: false });
+    const memoryData = listRecentMemoryCrossProject(this.db, 50);
+    const latestEventId = getLatestEventId(this.db) ?? 0;
+
+    const payload = {
+      tasks: tasksData.tasks,
+      memory_recent: memoryData,
+      last_event_id: latestEventId,
+    };
+
+    const data = `event: snapshot\ndata: ${JSON.stringify(payload)}\n\n`;
+    try {
+      client.res.write(data);
+      client.lastEventId = latestEventId;
+    } catch {
+      this.clients.delete(client.id);
     }
   }
 }

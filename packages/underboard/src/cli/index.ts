@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Command } from "commander";
 import { createRequire } from "node:module";
 
@@ -14,10 +15,18 @@ program
 program
   .command("start")
   .description("Start the Underboard service")
-  .option("--port <port>", "HTTP port", "4280")
+  .option("--port <port>", "HTTP port")
+  .option("--stdio", "Run MCP server over STDIO")
   .action(async (opts) => {
     const { startServer } = await import("#server/http-server.js");
-    await startServer({ port: Number(opts.port) });
+    const { loadConfig } = await import("./config.js");
+    const config = await loadConfig();
+    let port = opts.port ? Number(opts.port) : process.env.PORT ? Number(process.env.PORT) : config.port;
+    if (!port || port <= 0) {
+      console.error("Invalid port specified");
+      process.exit(1);
+    }
+    await startServer({ port, stdio: opts.stdio });
   });
 
 program

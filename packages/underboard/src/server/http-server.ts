@@ -45,12 +45,20 @@ function authMiddleware(req: http.IncomingMessage): boolean {
   return validateBearerToken(auth, token);
 }
 
-export async function startServer(options: { port: number; dbPath?: string }) {
+export async function startServer(options: { port: number; dbPath?: string; stdio?: boolean }) {
   token = await getOrCreateToken();
   db = createDatabase(options.dbPath);
   eventBus = createEventBus(db);
 
   const mcpServer = createMcpServer(db, false);
+
+  if (options.stdio) {
+    consola.options.stdout = process.stderr;
+    const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
+    const transport = new StdioServerTransport();
+    await mcpServer.connect(transport);
+    consola.info("Underboard MCP server connected via STDIO");
+  }
 
   server = http.createServer(async (req, res) => {
     const port = options.port;
@@ -91,10 +99,12 @@ export async function startServer(options: { port: number; dbPath?: string }) {
       return;
     }
 
-    if (url.pathname === "/styles.css") {
+    if (url.pathname === "/styles.css" || url.pathname === "/app.js") {
       try {
-        const content = fs.readFileSync(path.join(DASHBOARD_DIR, "styles.css"));
-        res.writeHead(200, { "Content-Type": "text/css", ...cors });
+        const content = fs.readFileSync(path.join(DASHBOARD_DIR, url.pathname.slice(1)));
+        const ext = path.extname(url.pathname);
+        const ct = ext === ".js" ? "application/javascript" : ext === ".css" ? "text/css" : "text/plain";
+        res.writeHead(200, { "Content-Type": ct, ...cors });
         res.end(content);
       } catch {
         res.writeHead(404);
@@ -248,6 +258,15 @@ export async function startServer(options: { port: number; dbPath?: string }) {
 
     res.writeHead(404, { "Content-Type": "application/json", ...cors });
     res.end(JSON.stringify({ error: "Not found" }));
+  });
+
+  server.on("error", (err: any) => {
+    if (options.stdio) {
+      consola.warn(`Failed to start Dashboard server (port ${options.port} might be in use):`, err.message);
+    } else {
+      consola.error("Dashboard server error:", err);
+      process.exit(1);
+    }
   });
 
   server.listen(options.port, "127.0.0.1", () => {

@@ -48,6 +48,7 @@ export async function loadConfig(overrides?: Partial<UnderboardConfig>): Promise
     configFile: configPath,
     defaults: DEFAULT_CONFIG,
     overrides: overrides as any,
+    dotenv: true,
   });
 
   return config;

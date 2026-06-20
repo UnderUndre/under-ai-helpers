@@ -29,7 +29,7 @@
     "dashboard"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"import('node:fs').then(f => f.cpSync('src/storage/migrations', 'dist/storage/migrations', { recursive: true }))\"",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",

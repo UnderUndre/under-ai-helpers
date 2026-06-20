@@ -17,6 +17,10 @@ export class SseClient {
     if (this.lastEventId > 0) {
       url.searchParams.set("lastEventId", this.lastEventId);
     }
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+      url.searchParams.set("token", token);
+    }
 
     this.es = new EventSource(url.toString());
 

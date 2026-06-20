@@ -149,6 +149,19 @@ export function listRecentMemory(
   return rows.map(parseMemoryRow);
 }
 
+export function listRecentMemoryCrossProject(
+  db: Database.Database,
+  limit: number = 20
+): MemoryRow[] {
+  const clampedLimit = Math.max(1, Math.min(limit, 100));
+  const rows = db
+    .prepare(
+      `SELECT * FROM memory_entries ORDER BY created_at DESC LIMIT ?`
+    )
+    .all(clampedLimit) as Record<string, unknown>[];
+  return rows.map(parseMemoryRow);
+}
+
 export function deleteMemory(
   db: Database.Database,
   id: string,
