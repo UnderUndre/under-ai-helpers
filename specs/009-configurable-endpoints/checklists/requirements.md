@@ -22,7 +22,7 @@
 - [ ] CHK008 Verify that if `EMBEDDING_MODEL_PATH` is unset, status is `"disabled"` (warning to stderr, degrades gracefully).
 - [ ] CHK008a Verify that if `EMBEDDING_MODEL_PATH` is SET but file missing, status is `"failed"` (error to stderr, degrades gracefully, no crash).
 - [ ] CHK008b Verify that `underboard model fetch` always downloads to `~/.underboard/models/` regardless of `EMBEDDING_MODEL_PATH`.
-- [ ] CHK008c Verify that `memory_recall` response includes `embedding_status` field (`active`/`disabled`/`failed`).
+- [ ] CHK008c Verify that `memory_recall` response includes `embedding_status` field (`ready`/`lexical_only`).
 
 ## LLM Configuration
 

@@ -119,7 +119,7 @@ An operator wants to enable the deep recall (dialectic) feature. They configure 
   - **`memory_recall`**: Fall back to local storage (FTS5 / local-lexical backend). Return partial results to the caller.
   - **`memory_write`**: Succeed locally (local DB write), enqueue for sync (existing sync queue per `migrations/003_dialog_spools.sql`). Response MUST include `synced: false` flag so callers know the write is pending replication.
   - **Warning rate-limiting**: Degradation warnings to `stderr` are rate-limited to at most **1 warning per 5 minutes per operation type** (`recall`, `write`) after the first occurrence, to prevent log flooding during prolonged outages. The first occurrence is always logged immediately.
-- **FR-010**: `memory_recall` response MUST include an `embedding_status` field reflecting the embedding subsystem state. The existing union `"ready" | "lexical_only"` (already returned by `recall.ts:23`, `hybrid-retrieval.ts:27`) is EXTENDED to:
+- **FR-010**: `memory_recall` response MUST include an `embedding_status` field reflecting the embedding subsystem state. The existing union `"ready" | "lexical_only"` (already returned by `recall.ts:23`, `hybrid-retrieval.ts:27`) is retained and mapped as follows:
   - `"ready"` — embeddings loaded and used for semantic recall (ONNX active).
   - `"lexical_only"` — embeddings unavailable; recall falls back to lexical FTS5 only. This covers two sub-cases that 009 introduces:
     - `model_path` not configured → intentional off (config `disabled`).

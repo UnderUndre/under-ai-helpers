@@ -45,7 +45,7 @@
 - [ ] T003 [BE] Implement helper `expandHome(path)` for expanding homedir tilde path (`~`) and a config redaction utility to replace `honcho.token` and `llm.api_key` with `***` in `packages/underboard/src/cli/config.ts`.
 - [ ] T004 [BE] Rewrite config loading function (`loadConfig`) in `packages/underboard/src/cli/config.ts` to merge CLI options, environment variables (and `.env` files via c12's dotenv resolution), config.json, and default settings field-by-field. Numeric CLI/env options (`--port`, `--honcho-timeout`) MUST be parsed via `Number()` with `Number.isFinite` guard before merge (reject non-numeric strings with a clear error).
 - [ ] T005 [BE] Add CLI option definitions for Honcho, embedding, LLM, and DB path to `underboard start` in `packages/underboard/src/cli/index.ts`.
-- [ ] T-VERIFY-ENV [BE] **Empirically verify `.env` loading paths (FR-008, F6 fix)**. Write two `.env` files: `~/.underboard/.env` (with `HONCHO_TOKEN=from-home`) and `./cwd/.env` (with `HONCHO_TOKEN=from-cwd`). Boot the server, log `process.env.HONCHO_TOKEN`. Assert: (1) home value loads, (2) cwd value overrides home. If home `.env` does NOT load, fix the loader to explicitly call `dotenv.config({ path })` before c12. This task gates SC-002.
+- [ ] T-VERIFY-ENV [BE] **Empirically verify `.env` loading paths (FR-008, F6 fix)**. Write two `.env` files: `~/.underboard/.env` (with `HONCHO_TOKEN=from-home`) and `./cwd/.env` (with `HONCHO_TOKEN=from-cwd`). Boot the server, log `process.env.HONCHO_TOKEN`. Assert: (1) home value loads via the explicit `dotenv.config()` call, (2) cwd value overrides home via c12. This task gates SC-002.
 
 **Checkpoint**: Configuration precedence and resolution logic ready + empirically verified.
 
