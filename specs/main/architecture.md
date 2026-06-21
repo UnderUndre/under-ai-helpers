@@ -103,8 +103,9 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | Spec: `specs/005-agents-board-and-memory/` | Feature spec, plan, data model, contracts (005 original). |
 | Spec: `specs/008-memory-backend-honcho/` | Backend seam + Honcho integration spec, plan, data model, contracts (008). |
 | Spec: `specs/007-dialog-capture/` | Dialog capture pipeline spec, plan, contracts (007). Phase 2 of 006/US7 — feeds the Honcho Session entity reserved by 008. |
+| Spec: `specs/009-configurable-endpoints/` | Configuration resolution (CLI > Env > config.json > default) for ports, DB, Honcho, LLM, and ONNX model paths (009). |
 
-**Backend dependency**: Honcho v3.0.9 (self-hosted Docker stack: Postgres 16 + pgvector, Redis 7, TEI embed + rerank). Local FTS5 serves as permanent offline fallback. ONNX Runtime and sqlite-vec removed (008).
+**Backend dependency**: Honcho v3.0.9 (self-hosted Docker stack: Postgres 16 + pgvector, Redis 7, TEI embed + rerank) or local FTS5 for offline-only fallback. Local ONNX embedding model is used for local vector search embeddings when configured.
 
 ## 6. SpecKit Integration
 
