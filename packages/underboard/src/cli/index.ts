@@ -26,7 +26,7 @@ program
       console.error("Invalid port specified");
       process.exit(1);
     }
-    await startServer({ port, stdio: opts.stdio });
+    await startServer({ port, dbPath: config.db_path, stdio: opts.stdio });
   });
 
 program

@@ -11,6 +11,7 @@ export interface TaskUpdateInput {
   status?: string;
   assignee?: string;
   notes?: string;
+  archived?: boolean;
   if_match?: { updated_at: string };
 }
 
@@ -58,6 +59,7 @@ export function taskUpdate(
   if (input.status !== undefined) updates.status = input.status;
   if (input.assignee !== undefined) updates.assignee = input.assignee;
   if (input.notes !== undefined) updates.notes = input.notes;
+  if (input.archived !== undefined) updates.archived = input.archived ? 1 : 0;
 
   const row = updateTask(db, input.id, { ...updates, if_match: input.if_match?.updated_at });
 

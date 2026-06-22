@@ -14,6 +14,15 @@ board.onTaskClick = (task) => {
   openTaskModal(task);
 };
 
+board.onCreateTask = async (taskData) => {
+  try {
+    await api.createTask(taskData);
+  } catch (err) {
+    console.error("Failed to create task:", err);
+    alert("Failed to create task: " + err.message);
+  }
+};
+
 async function init() {
   try {
     const health = await api.getHealth();

@@ -56,10 +56,10 @@ export class Board {
 
   openNewTaskModal() {
     const overlay = document.createElement("div");
-    overlay.className = "modal-overlay";
+    overlay.className = "modal-overlay open";
 
     const modal = document.createElement("div");
-    modal.className = "modal";
+    modal.className = "modal-content";
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-label", "Create new task");
