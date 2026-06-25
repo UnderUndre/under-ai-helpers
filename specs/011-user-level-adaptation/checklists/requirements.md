@@ -31,9 +31,14 @@
 
 ## Notes
 
-- 3 [NEEDS CLARIFICATION] markers are by design and within the max-3 limit. They cover genuinely material decisions with no neutral default:
-  - **FR-015**: 3-step vs 5-step level scale (impacts data model + adaptation smoothness)
-  - **FR-016**: single global value vs sub-domain matrix within one project (impacts profile data model)
-  - **FR-017**: sync transport mechanism (impacts vendor lock-in + offline behavior)
-- These are deferred to `/speckit.clarify` (Phase 2 of this full-spec session) per the deduplication rule.
-- Items marked incomplete require spec updates before `/speckit.clarify` or `/speckit.plan`
+- Initial Phase 1 clarifications are resolved:
+  - **FR-015**: switchable granularity (3-step / 5-step / continuous)
+  - **FR-016**: expandable-hybrid per-project model
+  - **FR-017**: multi-transport sync with encrypted-file default
+- Review-driven updates were then integrated across `spec.md`, `plan.md`, `tasks.md`, `data-model.md`, `contracts/`, `research.md`, and `quickstart.md`:
+  - `FR-019`: pending proposal lifecycle for hybrid mode
+  - `FR-020`: canonical sub-domain vocabulary
+  - `FR-021`: explicit signal-capture MCP tool
+  - `FR-022`: guaranteed skill registration path
+  - `FR-023`: sync passphrase handling + PBKDF2 floor
+- Constitution caveat remains: Principle IX branch naming is a documented deviation requiring `--override-gate` at `/speckit.implement`. This is tracked in `plan.md`; it does not invalidate the specification itself.
