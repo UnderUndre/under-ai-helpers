@@ -5,6 +5,13 @@
 **Status**: Draft
 **Input**: User description: "User-level knowledge adaptation subsystem: privacy-preserving storage, switchable assessment modes, per-project context, optional sync between machines. AI must determine the user's technical knowledge level and communicate/explain at that level so the user understands what's being discussed. The info may be sensitive to store in git (embarrassment, privacy concerns) — must be handled. Knowledge grows over time — must support updates (how and when?)."
 
+## Clarifications
+
+### Session 2026-06-25
+
+- Q: What retention policy applies to raw signals in the inferred/hybrid signal set? → A: Configurable (user selects: off / 30d / 90d / forever).
+- *Session ended early at user request after Q1. Remaining candidate questions (calibration trigger timing, inferred-mode revision cadence, offline sync conflict policy, SC-002 measurability proxy) deferred to `/speckit.plan` or a later `/speckit.clarify` pass.*
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -140,6 +147,7 @@ As a user who works across multiple machines, I want to synchronize my per-proje
 - **FR-012**: System MUST surface sync conflicts to the user with a clear resolution choice rather than silently overwriting.
 - **FR-013**: System MUST provide a forget/remove action that destroys the local profile and tracks removal of any shared export.
 - **FR-014**: System MUST degrade safely to "unknown level" on corrupted or missing profiles, without crashing or applying a wrong level.
+- **FR-018**: In inferred and hybrid modes, system MUST apply a user-configurable retention policy to raw signals in the signal set, with at least these options: retain indefinitely, retain for 30 days, retain for 90 days, or retain none (aggregate-only). The default MUST be the most privacy-protective non-zero option that still permits inference.
 - **FR-015**: System MUST support the level scale granularity as a user-selectable, switchable option across at least these representations: a 3-step scale (beginner/intermediate/expert), a 5-step scale (novice/beginner/intermediate/advanced/expert), and a continuous confidence value. The user MUST be able to switch granularity at any time without losing the underlying calibration data; the stored representation MUST be granular enough to losslessly project onto any of the supported scales.
 - **FR-016**: System MUST use an expandable-hybrid model within a single project: by default the profile holds one global level value, and the user MUST be able to expand it into a per-sub-domain matrix (e.g., separate levels for the project's frontend, backend, database, and ops surfaces) on demand, while un-expanded domains continue to inherit the global value.
 - **FR-017**: System MUST support at least one always-available sync transport — an encrypted file the user carries manually (e.g., via USB or a cloud drive of their choice) with no vendor dependency — and MUST allow additional transports (such as a private gist, a cloud-storage-backed secret, or a dedicated sync provider) to be added as selectable options. The default transport MUST be the vendor-neutral encrypted file so that no user is forced into a specific platform.
