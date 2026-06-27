@@ -1,0 +1,52 @@
+You are the {{ROLE}}-SPECIALIST agent. Load skills from .claude/agents/{{ROLE}}-specialist.md. Work DIRECTLY — no subagents unless {{ROLE}} explicitly delegates. Make a focused change: {{ACTION_SUMMARY}} ({{FILE_COUNT}}).
+
+REPO ROOT: {{REPO_ROOT}}
+TASK: {{SPEC_ID}}-{{TASK_ID}} — {{ONE_LINE_SUMMARY}}
+
+=== FILE(S) TO {{EDIT_OR_CREATE}} ===
+{{TARGET_FILE}}  ({{EXISTING_OR_NEW}}; {{WHAT_GETS_ADDED}})
+
+=== READ FIRST (do not skip — injects conventions so you don't re-discover them) ===
+- {{RELATIVE_PATH}} (lines {{X}}-{{Y}}) — {{WHY_THIS_REFERENCE}}
+- specs/{{SPEC_ID}}/tasks.md {{TASK_ID}} (the full task description — follow it precisely)
+- specs/{{SPEC_ID}}/contracts/{{CONTRACT_FILE}}.md §{{SECTION}} (input/output shape — output MUST match this contract)
+- {{REFERENCE_FILE}} — {{WHAT_TO_LEARN_FROM_IT}} (style, pattern, lock helper, etc.)
+
+=== CONTEXT (domain facts you need) ===
+- {{DOMAIN_FACT_1}}
+- {{DOMAIN_FACT_2}} (e.g. "the BFF in apps/api CANNOT import across the app boundary from apps/web")
+- {{ENV_VAR_OR_CONFIG}} (e.g. "FR-008: maxTokens default 8000. FR-007: timeout 90s < 120s lock TTL")
+
+=== CHANGES (implement ALL steps, in this order) ===
+1. {{STEP_1}} — {{DETAIL_WITH_EXACT_NAMES}}
+2. {{STEP_2}} — {{DETAIL}}
+   ```ts
+   {{CODE_SNIPPET_OR_SIGNATURE}}
+   ```
+3. {{STEP_3}} — {{DETAIL}}
+   - {{SUB_BULLET_WITH_EXACT_ERROR_CLASS}}: `throw appErrorToTRPC(new ValidationError("..."))`
+   - {{SUB_BULLET_WITH_EXACT_LOCK_KEY}}: `redis.set("{{KEY}}", "1", "EX", {{TTL}}, "NX")`
+
+=== CONVENTIONS (match the file you're editing) ===
+- Style: {{SEMICOLONS_OR_NOT}}, {{INDENT}}-space indent, {{QUOTE_STYLE}} quotes, `const` arrow handlers.
+- Libraries already installed — do NOT add deps: {{LIBS}}.
+- NO `console.log` — use the file's existing logger import.
+- Use `appErrorToTRPC(new XError(...))` for all thrown errors at the tRPC boundary (match existing pattern).
+- NO comments unless strictly necessary for a cross-file invariant.
+
+=== SELF-VERIFY (MUST RUN before you return) ===
+After the edit, from {{APP_DIR}} run:
+   npx tsc --noEmit
+Report the output. FIX any error that points at {{YOUR_FILE}} or your new imports. Pre-existing errors elsewhere are OK (report the count). The bar: ZERO new errors introduced by your change.
+
+=== RULES ===
+- Only edit {{EXACT_FILES_LIST}}. Do NOT touch {{OFF_LIMITS_FILES}}.
+- Do NOT commit.
+
+=== DELIVERABLE ===
+1. {{CONFIRMATION_OF_CHANGE}}: paste {{KEY_SNIPPET}} ({{LINE_COUNT}} lines).
+2. {{STEPS_CHECKLIST}}: confirm each step above is present (one phrase each).
+3. {{VERIFY_OUTPUT}}: paste `npx tsc --noEmit` output filtered to {{YOUR_FILE}} (or confirm clean).
+
+---
+{{OPTIONAL_NOTES_OR_EDGE_CASES}}

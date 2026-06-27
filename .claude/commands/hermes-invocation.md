@@ -1,189 +1,159 @@
-# Hermes CLI — Non-Interactive Invocation Pattern
+# Hermes — Non-Interactive Invocation Pattern
 
-выполни промт с помощью хермеса и проверь его работу - повторяй так пока не будешь удовлетворен результатом работы
+выполни промт с помощью хермеса и проверь его работу
 
-Hermes ships a dedicated one-shot mode (`-z`) and a programmatic quiet mode (`-Q`). Use these — they are designed for scripts and pipes. The legacy `prompt_toolkit` monkey-patch wrapper is kept at the bottom as a fallback for ancient versions only.
+> **TL;DR** — Use the committed portable runner at **`scripts/hermes/run-agent.py`**. It auto-detects the Hermes install (Windows/macOS/Linux), reads config from env vars, and loads the prompt from a file. The `hermes` CLI flags (`-z`, `-Q`) are unreliable on Windows (TTY / `prompt_toolkit` issues); the Python `AIAgent` API is the battle-tested path and works cross-platform. This document reflects how Hermes was driven across spec 029 (26 tasks, ~1400 LOC, 6 subagent runs).
 
-## ⭐ Preferred: `hermes -z` (true one-shot)
+**For full setup + troubleshooting + prompt-writing tips, see [`scripts/hermes/README.md`](scripts/hermes/README.md).** This command doc is the orchestrator-side quick reference.
 
-`hermes -z <prompt>` is the official "single prompt in, final response text out, nothing else on stdout or stderr" mode. Banner, spinner, tool previews, session_id line — all suppressed. Approvals auto-bypassed. Tools, memory, rules, and `AGENTS.md` in CWD are loaded as normal.
+---
 
-```bash
-hermes -z "your prompt here" -m glm/glm-5.1 --provider custom
-```
+## ⭐ Preferred: `scripts/hermes/run-agent.py` (portable, committed)
 
-**Long prompts via env var** (avoids shell quoting hell):
+The runner auto-detects Hermes via `HERMES_PYTHON` env var → `hermes` on PATH → common venv locations. It loads the prompt from a file (never a CLI arg — avoids shell-quoting hell) and prints the agent's final response to stdout.
 
-```bash
-export HERMES_PROMPT="$(cat .hermes-prompt.txt)"
-hermes -z "$HERMES_PROMPT" -m glm/glm-5.1 > .hermes-output.log 2>&1
-```
-
-**Long prompts via heredoc + temp file** (for multi-page tasks with subagents):
+### 1. One-time: confirm Hermes is detected
 
 ```bash
-cat > .hermes-prompt.txt << 'PROMPT_EOF'
-You are an autonomous research agent. Spawn subagents for sections A, B, C in parallel.
-
-TASK A — <description>
-- File: <path>
-- Output: <path>
-
-TASK B — <description>
-- File: <path>
-- Output: <path>
-
-Do NOT commit anything to git. When done, print absolute paths of all created files.
-PROMPT_EOF
-
-hermes -z "$(cat .hermes-prompt.txt)" -m glm/glm-5.1 > .hermes-output.log 2>&1
-rm -f .hermes-prompt.txt
+python scripts/hermes/run-agent.py --help
 ```
 
-## Alternative: `hermes chat -q -Q` (with session controls)
+If it can't find `run_agent`, it prints install instructions. Set `HERMES_PYTHON=/path/to/venv/python` to override. Optional tuning: `HERMES_MODEL`, `HERMES_PROVIDER`, `HERMES_BASE_URL`, `HERMES_MAX_ITERATIONS` (defaults: `agy/gemini-3.5-flash-low`, `custom`, `http://localhost:20128/v1`, `140`).
 
-Use when you need flags that `-z` doesn't expose: `--source` for telemetry tag, `--max-turns`, `--checkpoints`, `-s` skills preload, session resume, etc.
+### 2. Write the prompt (from the committed template)
 
 ```bash
-hermes chat -q "your prompt" -Q --source claude-orchestrator --max-turns 50 -m glm/glm-5.1
+cp scripts/hermes/task-prompt.template.txt .hermes/029/t014.txt
+# edit .hermes/029/t014.txt — fill the {{PLACEHOLDERS}}
 ```
 
-`-Q` (Quiet) does what `-z` does for output (no banner/spinner/previews), but still emits the session_id line and respects approval flow (unless combined with `--yolo`).
+Prompts live under `.hermes/<spec-id>/` (gitignored scratch space). See the template for the required sections: `READ FIRST`, `CHANGES`, `SELF-VERIFY`, `RULES`, `DELIVERABLE`.
 
-## Useful Flags Reference
+### 3. Launch
 
-| Flag                  | Purpose                                                                                  |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `-z, --oneshot PROMPT`| One-shot scripted mode — clean stdout, auto-bypass approvals, tools/memory still loaded |
-| `-q, --query PROMPT`  | Single query in interactive `chat` subcommand                                            |
-| `-Q, --quiet`         | Programmatic mode: suppress banner/spinner/tool-previews                                 |
-| `-m, --model MODEL`   | Override model (e.g. `glm/glm-5.1`, `anthropic/claude-sonnet-4.6`)                       |
-| `--provider PROVIDER` | Override provider (`custom`, `openrouter`, `anthropic`, `openai`, `deepseek`, etc.)      |
-| `-t, --toolsets CSV`  | Enable only specific toolsets — e.g. `-t "file,terminal,web"` for restricted runs        |
-| `-s, --skills NAMES`  | Preload skills for the session (repeatable or comma-separated)                           |
-| `-r, --resume ID`     | Resume a previous session by ID                                                          |
-| `-c, --continue [N]`  | Resume the most recent session (or matching title)                                       |
-| `-w, --worktree`      | Run in an isolated git worktree — perfect for parallel Hermes runs on the same repo     |
-| `--max-turns N`       | Cap tool-calling iterations (default 90). Lower to fail-fast on runaway loops           |
-| `--checkpoints`       | Enable filesystem checkpoints before destructive ops — recover via `/rollback`           |
-| `--source TAG`        | Session source tag for telemetry filtering (default `cli`). Use `tool` for integrations |
-| `--ignore-rules`      | Skip auto-injection of `AGENTS.md`, `SOUL.md`, `.cursorrules`, memory, skills           |
-| `--ignore-user-config`| Ignore `~/.hermes/config.yaml` — useful for isolated CI runs                             |
-| `--yolo`              | Bypass all dangerous-command approval prompts (DO NOT use without explicit consent)     |
-| `--pass-session-id`   | Include session ID in the agent's system prompt                                          |
-| `-v, --verbose`       | Verbose output (mostly for debugging Hermes itself)                                      |
-| `-V, --version`       | Show version                                                                             |
+**Blocking (small task, < 3 min):**
 
-## Background Execution (for long tasks)
-
-For tasks > 5 min, run in background with **direct redirect (NOT `tee`)** — otherwise the parent process completion notification gets lost in the pipe:
-
-```bash
-hermes -z "$HERMES_PROMPT" -m glm/glm-5.1 > .hermes-output.log 2>&1 &
-HERMES_PID=$!
-echo "Hermes background PID: $HERMES_PID"
-# Check progress later: tail -50 .hermes-output.log
-# Wait: wait $HERMES_PID
+```powershell
+python scripts\hermes\run-agent.py .hermes\029\t014.txt
 ```
 
-## Python Library API (alternative path)
+**Background (big task, 4-8 min) — redirect to file, NOT `tee`:**
 
-If you need fine-grained control inside another Python script, skip the CLI entirely:
-
-```python
-from run_agent import AIAgent
-
-agent = AIAgent(
-    model="glm/glm-5.1",
-    quiet_mode=True,       # MANDATORY for non-interactive — suppresses spinners/output
-    skip_memory=True,      # Optional: don't load persistent memory for stateless batch
-    max_iterations=50,     # Cap tool-calling loop
-    base_url="http://localhost:20128/v1",  # Optional: custom endpoint
-)
-response_text = agent.chat("your prompt here")
+```powershell
+& python scripts\hermes\run-agent.py .hermes\029\t008.txt *> .hermes\029\t008.out
+Write-Output "T008_EXIT=$LASTEXITCODE"
 ```
 
-**Thread safety**: one `AIAgent` per thread/task. Never share across concurrent calls.
+Run background launches with `blocking: false` + `wait_ms_before_async: 5000`. Poll with `CheckCommandStatus` (exponential backoff: 120s → 150s → 180s).
 
-**Resume**: pass `conversation_history=prior_messages` to continue a previous turn.
+> **Do NOT pipe through `tee` / `Tee-Object`** — it swallows the process-completion signal in background mode. Redirect straight to a file (`*> file`).
 
-## Workdir, Timeouts, Resume
+### 4. Monitor via the agent log (NOT stdout)
 
-- **Workdir**: always set to the project root before invoking. Hermes loads `AGENTS.md` / skills / rules from CWD.
-- **Timeout**: 600000ms (10 min) for complex tasks with subagents. Push to 1800000ms (30 min) for full-plan / cross-repo work.
-- **Resume**: after a crash or interrupt, `hermes -c` re-enters the latest session with full history. Use `--source <tag>` consistently to filter your batch sessions out of human session lists.
+The runner's stdout only gets the **final** response. To watch the agent think, tail the live log:
 
-## What Does NOT Work
-
-| Method                                | Why it fails                                                            |
-| ------------------------------------- | ----------------------------------------------------------------------- |
-| `hermes chat -q "..."` (without `-Q`) | Interactive mode boots `prompt_toolkit` → `NoConsoleScreenBufferError`  |
-| `winpty hermes chat -q "..."`         | `stdin is not a tty`                                                    |
-| `python -m hermes_cli`                | Module has no `__main__` — use `from hermes_cli.main import main`       |
-| `TERM=dumb` alone                     | `prompt_toolkit` ignores it on Windows, needs Win32 console buffer      |
-| Piping via `| tee file`               | Background-task completion notification gets lost. Use `> file 2>&1`    |
-
-## Legacy Fallback: `prompt_toolkit` Monkey-Patch
-
-If your Hermes install pre-dates `-z` / `-Q` flags (v0.9 or older), use this wrapper. Avoid otherwise — it's hack territory.
-
-```bash
-export HERMES_PROMPT="$(cat .hermes-prompt.txt)"
-TERM=dumb NO_COLOR=1 PROMPT_TOOLKIT_NO_CPR=1 "C:\Users\[username]\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe" -c "
-import sys, os
-os.environ['TERM'] = 'dumb'
-os.environ['NO_COLOR'] = '1'
-os.environ['PROMPT_TOOLKIT_NO_CPR'] = '1'
-import prompt_toolkit.output.defaults as ptd
-original_create = ptd.create_output
-def patched_create(stdout=None, *a, **kw):
-    try:
-        return original_create(stdout, *a, **kw)
-    except Exception:
-        from prompt_toolkit.output.plain_text import PlainTextOutput
-        return PlainTextOutput(stdout or sys.stdout)
-ptd.create_output = patched_create
-prompt = os.environ['HERMES_PROMPT']
-from hermes_cli.main import main
-sys.argv = ['hermes', 'chat', '-q', prompt, '--verbose']
-main()
-" > .hermes-output.log 2>&1
+```powershell
+Get-Content "$env:LOCALAPPDATA\hermes\logs\agent.log" -Tail 4
+# macOS/Linux: tail -f ~/.hermes/logs/agent.log
 ```
 
-## Prompt Template for Code Fixes
+Healthy signals: API call count climbing (70-90+ for big tasks is normal), `cache=90%+`, tool errors self-correcting. Concerning: `total` tokens near ~210k (context window filling — it wraps up soon) or the same error looping > 5x.
+
+---
+
+## Prompt structure that works
+
+Use the committed template (`scripts/hermes/task-prompt.template.txt`). The 7 sections that make subagents succeed:
 
 ```
-Fix the following issues from code review. Spawn subagents for parallel work where possible.
+You are the <ROLE>-SPECIALIST agent. Load skills from .claude/agents/<role>-specialist.md. Work DIRECTLY — no subagents.
 
-TASK 1 - <ID>: <description>
-- File: <path>
-- What to do: <specific instructions>
+REPO ROOT: <absolute path>
+TASK: <spec-id>-<task-id> — <one-line summary>
 
-TASK 2 - <ID>: <description>
-- File: <path>
-- What to do: <specific instructions>
+=== FILE(S) TO EDIT ===
+<path>  (EXISTING/NEW; <what gets added>)
 
-Do NOT commit. When done, print a one-line summary per task with the absolute file path touched.
+=== READ FIRST (do not skip) ===
+- <relative path> (lines X-Y) — <why>        ← saves 30-50% of API calls
+- specs/<spec-id>/tasks.md <task-id>
+- specs/<spec-id>/contracts/<file>.md §<N>    ← output MUST match this contract
+
+=== CHANGES (implement ALL, in order) ===
+1. <step> — <exact env vars / error classes / lock keys / TTLs>
+2. <step> — <code signature>
+   ...
+
+=== CONVENTIONS ===
+- Match file's style (semicolons? 2-space? quotes?).
+- Libraries already installed — do NOT add deps.
+- NO console.log — use the file's logger.
+
+=== SELF-VERIFY (MUST RUN) ===
+   npx tsc --noEmit          ← agent self-corrects before returning
+FIX errors in your file. Pre-existing errors elsewhere OK.
+
+=== RULES ===
+- Only edit <exact files>. Do NOT touch <off-limits list>.   ← prevents scope creep
+- Do NOT commit.
+
+=== DELIVERABLE ===
+1. <confirm change + paste key snippet>
+2. <paste tsc output filtered to your file>
 ```
 
-## Quick Decision Tree
+**Why each section matters:**
+
+- `READ FIRST` with line ranges stops the agent re-discovering conventions.
+- Numbered `CHANGES` with exact names prevents invented env vars / error classes.
+- `SELF-VERIFY` with `tsc` returns a clean file, not a draft.
+- `RULES` with an explicit off-limits list prevents scope creep (the agent WILL edit tangential files otherwise).
+
+---
+
+## Operational playbook for orchestrating a spec
+
+When driving a multi-task spec (like 029) from this orchestrator session:
+
+1. **One task per runner invocation.** Don't batch unrelated tasks — context window fills, quality drops after ~task 3.
+2. **Read the target file yourself first.** Inject exact line numbers + conventions into `READ FIRST`. The agent can't grep as well as you can.
+3. **Big tasks (multi-file mutation, complex UI, compiler) → background** + poll the log. They take 4-8 min and 70-90 API calls.
+4. **Small mechanical tasks (cron, env-var addition, single mutation) → edit directly** in this session. Spawning a subagent for a 30-line file is slower than editing inline.
+5. **Verify every subagent result yourself.** Run `npx tsc --noEmit | Select-String <file>` after each returns. The agent's self-verify catches most issues but not all (e.g. it created a stray test file with a bad `uuid` import in spec 029 T021 — caught + deleted).
+6. **Clean up subagent noise.** Subagents create artifacts outside scope: `_gate-override.md` files, test files, review notes. `git status --short` after each run; delete anything unexpected.
+7. **Mark spec checkboxes as you go.** Update `specs/<id>/tasks.md` `[X]` immediately after verifying each task — don't batch, you'll lose track.
+
+---
+
+## What does NOT work (don't waste time)
+
+| Method                                    | Why it fails                                                                                  |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `hermes chat -q "..."` (without `-Q`)     | Interactive `prompt_toolkit` boots → `NoConsoleScreenBufferError` on Windows                  |
+| `hermes -z "..."` on this Windows machine | CLI entrypoint TTY probe fails intermittently — use `scripts/hermes/run-agent.py` instead     |
+| `winpty hermes chat`                      | `stdin is not a tty`                                                                          |
+| `python -m hermes_cli`                    | Module has no `__main__` — use the `AIAgent` API via `run-agent.py`                           |
+| `| Tee-Object file` / `| tee file`        | Loses the process-completion signal in background mode — use `*> file` / `> file 2>&1`        |
+| Piping a multi-KB prompt as a CLI arg     | Shell quoting hell — **always load from a file** (`run-agent.py <prompt-file>`)               |
+
+---
+
+## Quick decision tree
 
 ```
-Do I need clean stdout for piping/programmatic use?
-├── YES → hermes -z "PROMPT"
-│         (or AIAgent(quiet_mode=True).chat() from Python)
-└── NO, I need flags like --source/--max-turns/--checkpoints
-          → hermes chat -q "PROMPT" -Q --source claude-orch --max-turns 50
+Which runner?
+└── ALWAYS → python scripts/hermes/run-agent.py <prompt-file>   ⭐ (portable, committed)
 
-Is the prompt > a few KB or contains awkward chars?
-└── Write to .hermes-prompt.txt + use $(cat .hermes-prompt.txt)
-    OR export HERMES_PROMPT and reference $HERMES_PROMPT
+Foreground or background?
+├── Small task (< 3 min)  → blocking: python scripts/hermes/run-agent.py <file>
+└── Big task (4-8 min)    → background: ... *> <file>.out  +  poll agent.log + verify tsc after
 
-Will the task run > 5 minutes?
-└── Background with `> file 2>&1 &` (NOT `| tee`)
-    Then `tail -50 file` to spot-check progress.
+Prompt size?
+├── < 2 KB, no awkward chars → still use a file (consistency)
+└── ≥ 2 KB or code/quotes    → .hermes/<spec-id>/tNNN.txt  (gitignored scratch space)
 
-Will I want to continue this session later?
-└── Note the session ID from output → resume with hermes --resume <id>
-    Or last session: hermes --continue / hermes -c
+When NOT to use Hermes at all:
+├── < 50 lines, mechanical           → edit directly in this session
+├── cross-cutting refactor           → orchestrate yourself (needs global judgment)
+└── interactive back-and-forth needed → Hermes is one-shot, can't ask clarifying questions
 ```
