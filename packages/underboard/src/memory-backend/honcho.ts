@@ -32,6 +32,7 @@ export class HonchoBackend implements MemoryBackend {
   private workspaceCache = new Map<string, string>();
   private peerCache = new Map<string, string>();
   private healthy = true;
+  private lastWarningTimes = new Map<"recall" | "write", number>();
 
   constructor(
     db: Database.Database,
@@ -40,6 +41,15 @@ export class HonchoBackend implements MemoryBackend {
     this.db = db;
     this.local = new LocalLexicalBackend(db);
     this.client = client;
+  }
+
+  private logDegradationWarning(opType: "recall" | "write", message: string) {
+    const now = Date.now();
+    const lastTime = this.lastWarningTimes.get(opType);
+    if (lastTime === undefined || now - lastTime >= 5 * 60 * 1000) {
+      this.lastWarningTimes.set(opType, now);
+      console.error(`[honcho-backend] WARNING: ${message}`);
+    }
   }
 
   async write(input: BackendWriteInput, ctx: ToolContext): Promise<BackendWriteOutput> {
@@ -54,14 +64,15 @@ export class HonchoBackend implements MemoryBackend {
         content_hash: localResult.id,
         project_id: ctx.project_id,
       });
-    } catch {
+    } catch (e: any) {
       // Honcho push failed → enqueue in sync_queue
       this.healthy = false;
       this.enqueueSync(ctx.project_id, localResult.id, input.content);
-      return { ...localResult, sync_status: "pending" };
+      this.logDegradationWarning("write", `Honcho write failed, enqueued for background sync: ${e.message}`);
+      return { ...localResult, sync_status: "pending", synced: false };
     }
 
-    return { ...localResult, sync_status: "synced" };
+    return { ...localResult, sync_status: "synced", synced: true };
   }
 
   async recall(input: BackendRecallInput, ctx: ToolContext): Promise<BackendRecallOutput> {
@@ -88,8 +99,9 @@ export class HonchoBackend implements MemoryBackend {
           return { results, embedding_status: "ready" };
         }
         // Honcho returned empty → fall through to local
-      } catch {
+      } catch (e: any) {
         this.healthy = false;
+        this.logDegradationWarning("recall", `Honcho recall failed, falling back to local lexical search: ${e.message}`);
       }
     }
 

@@ -8,7 +8,7 @@ export async function runBackfill(db: Database.Database, intervalMs: number = 50
 
   const tick = async () => {
     if (!running) return;
-    if (getEmbeddingStatus() !== "ready") {
+    if (getEmbeddingStatus() !== "active") {
       setTimeout(tick, intervalMs);
       return;
     }

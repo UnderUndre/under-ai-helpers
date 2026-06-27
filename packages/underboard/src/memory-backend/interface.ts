@@ -39,6 +39,7 @@ export interface BackendWriteOutput {
   created: boolean;
   provenance: Array<{ agent: string; ts: string }>;
   sync_status: "synced" | "pending" | "failed";
+  synced: boolean;
 }
 
 export interface BackendRecallInput {

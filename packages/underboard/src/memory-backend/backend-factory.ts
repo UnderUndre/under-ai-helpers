@@ -46,14 +46,14 @@ export function createBackend(
     // Version check (non-blocking — warning only per FR-011)
     client.health().then((h) => {
       if (h.version && h.version !== HONCHO_PINNED_VERSION) {
-        warnings.push(
-          `Honcho version mismatch: running ${h.version}, pinned ${HONCHO_PINNED_VERSION}. Integration tested against ${HONCHO_PINNED_VERSION}.`,
-        );
+        const msg = `Honcho version mismatch: running ${h.version}, pinned ${HONCHO_PINNED_VERSION}. Integration tested against ${HONCHO_PINNED_VERSION}.`;
+        warnings.push(msg);
+        console.error(`[backend-factory] WARNING: ${msg}`);
       }
     }).catch(() => {
-      warnings.push(
-        `Honcho unreachable at startup — backend will operate in degraded mode (lexical-only fallback) until Honcho recovers.`,
-      );
+      const msg = `Honcho unreachable at startup — backend will operate in degraded mode (lexical-only fallback) until Honcho recovers.`;
+      warnings.push(msg);
+      console.error(`[backend-factory] WARNING: ${msg}`);
     });
 
     return {

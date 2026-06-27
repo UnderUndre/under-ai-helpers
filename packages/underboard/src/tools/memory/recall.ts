@@ -33,7 +33,7 @@ export async function memoryRecall(
   const threshold = input.threshold ?? 0.3;
 
   let queryEmbedding: Float32Array | null = null;
-  if (getEmbeddingStatus() === "ready") {
+  if (getEmbeddingStatus() === "active") {
     queryEmbedding = await embed(input.query);
   }
 

@@ -62,21 +62,26 @@ Or run it directly via Node using the absolute path:
 
 ### Configuration
 
-Underboard uses `c12` for configuration and supports `.env` files. You can provide settings via:
+Underboard uses a cascading precedence tree for configuration on a per-field basis:
+**CLI Options > Environment Variables (and `.env` files) > Config file (`~/.underboard/config.json`) > Default values.**
 
-1. Environment variables (`PORT`, `HONCHO_ENDPOINT`, etc.)
-2. A `.env` file in your current working directory
-3. The config file `~/.underboard/config.json`
+#### Config options and defaults:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `HONCHO_ENDPOINT` | URL to your Honcho v3 instance | `http://127.0.0.1:8000` |
-| `HONCHO_TOKEN` | Bearer token for Honcho API | `undefined` |
-| `UNDERBOARD_DB_PATH` | Path to the SQLite database | `~/.underboard/data.db` |
-| `PORT` | Port for the dashboard | `4280` |
+| Parameter | CLI Option | Environment Variable | Default Value | Description |
+|-----------|------------|----------------------|---------------|-------------|
+| HTTP Port | `--port <port>` | `PORT` | `4280` | HTTP port for the dashboard. |
+| Database Path | `--db-path <path>` | `UNDERBOARD_DB_PATH` | `~/.underboard/data.db` | Path to the SQLite database. Tilde `~` is expanded to homedir. |
+| Honcho Endpoint | `--honcho-endpoint <url>` | `HONCHO_ENDPOINT` | `http://127.0.0.1:8000` | Coordinates to your Honcho v3 instance. |
+| Honcho Token | `--honcho-token <token>` | `HONCHO_TOKEN` | `undefined` | Bearer token for Honcho API (redacted as `***` in log output). |
+| Honcho Timeout | `--honcho-timeout <ms>` | `HONCHO_TIMEOUT_MS` | `5000` | Connection and request timeout in milliseconds. |
+| Embedding Model Name | `--embedding-model-name <name>` | `EMBEDDING_MODEL_NAME` | `paraphrase-multilingual-MiniLM-L12-v2.onnx` | Model name metadata. |
+| Embedding Model Path | `--embedding-model-path <path>` | `EMBEDDING_MODEL_PATH` | `undefined` | Path to local ONNX model file. If unset, embedding is disabled. |
+| LLM Endpoint | `--llm-endpoint <url>` | `LLM_ENDPOINT` | `undefined` | OpenAI-compatible endpoint. Suffix `/chat/completions` is auto-stripped. |
+| LLM API Key | `--llm-api-key <key>` | `LLM_API_KEY` | `undefined` | API key for LLM operations (redacted as `***` in log output). |
+| LLM Model Name | `--llm-model <model>` | `LLM_MODEL` | `undefined` | LLM model identifier. |
 
 > [!NOTE]
-> When starting, Underboard prioritizes `PORT` environment variable > `--port` CLI flag > `config.json` port value.
+> Sensitive configuration headers (Honcho Token and LLM API Key) are redacted in startup echoes and stderr blocks. When created/rewritten, `config.json` restricts permissions to `0600` (owner read/write only). Dotenv is resolved Cascading-style: first `~/.underboard/.env` is loaded, then cwd `.env` (overriding home).
 
 ## CLI Commands
 
