@@ -139,12 +139,13 @@
 **Purpose**: Full E2E tests, evaluation probe set, CLI commands, documentation
 
 - [ ] T029 [E2E] Write full end-to-end integration test covering all 5 user stories in tests/integration/knowledge-profile.test.ts (extends the file created in T014 — append new test cases, do not overwrite existing ones)
-- [ ] T034 [E2E] Register all 9 knowledge_profile_* MCP tools in packages/underboard/src/server/mcp-server.ts via server.tool(...) importing from the T002 barrel (review H1, analyze H1: unlisted tools are unreachable; this is the exact 009 defect). Add an integration assertion that tools/list returns all 9. Was wrongly listed under "existing files unchanged" in plan.md — corrected.
+- [ ] T034 [E2E] Register all knowledge_profile_* MCP tools (9 per contracts/index.md) in packages/underboard/src/server/mcp-server.ts via server.tool(...) importing from the T002 barrel (review H1, analyze H1: unlisted tools are unreachable; this is the exact 009 defect). Add an integration assertion that tools/list returns the full set. Was wrongly listed under "existing files unchanged" in plan.md — corrected.
 - [ ] T035 [E2E] Write mode-switch data preservation test (review L1, FR-007): set inferred → accumulate N signals → switch to self-declared → switch back to inferred → assert signal set intact and still drives inference. Extends tests/knowledge/inference-engine.test.ts.
 - [ ] T036 [E2E] Write sync security tests (review F3/F4): (a) PBKDF2 iteration count ≥600000, distinct salts for verification hash vs encryption key; (b) interrupted push leaves no partial encrypted file (atomic temp+rename); (c) pull validates GCM tag before touching local state; (d) distinct error codes TRANSPORT_UNAVAILABLE vs WRONG_PASSPHRASE vs CORRUPT_SYNC_FILE; (e) derived AES key zeroed after use. Extends tests/knowledge/sync-service.test.ts.
-- [ ] T030 [E2E] Create evaluation probe set and eval runner in tests/knowledge/eval-probes.ts (curated concept × target-level pairs for SC-001/SC-002)
+- [ ] T030 [E2E] Create evaluation probe set and eval runner in tests/knowledge/eval-probes.ts (curated concept × target-level pairs for SC-001/SC-002). **Scoring rubric (analyze L1)**: each probe rendering is rated on a 3-point Likert — *too shallow* / *just right* / *too deep* — against its assigned target level. "Just right" = explanation depth, vocabulary, and assumed prior-knowledge visibly match the target level (beginner = plain-language analogies + jargon defined on first use; expert = precise terminology + introductory definitions omitted + advanced patterns referenced directly). A probe passes iff rated "just right"; SC-001 threshold (≥80%) and SC-002 threshold (≥75% + beginner/expert renderings distinguishable) are computed from these per-probe verdicts.
 - [ ] T031 [BE] Add profile management CLI commands (profile status, export, forget, sync push/pull) in packages/underboard/src/cli/
 - [ ] T032 [DOC] Update README.md and package docs for knowledge adaptation feature
+- [ ] T037 [SETUP] Distribute `.specify/` to consumer projects via the clai-helpers CLI (FR-024, analyze H2 — the gap the user flagged twice). Three concrete changes in `packages/cli/`: (a) add `speckit` to the default `targets` string in `packages/cli/src/cli/init.ts` (currently `"claude,copilot,gemini"` → `"claude,copilot,gemini,speckit"`) so `npx clai-helpers init` produces `.specify/` without `--targets`; (b) add `".specify"` to the `files` array in `packages/cli/package.json` (currently `["dist","bin"]`) so `npm publish` ships the directory; (c) add an integration test asserting `clai-helpers init` in a temp consumer repo produces `.specify/` with `memory/constitution.md` and `templates/` present. `helpers.config.ts` already defines the `speckit` target (identity transformer, source `.specify/**/*`) — no change there. This task has NO dependency on the underboard knowledge work; it is bundled here because FR-024 shares the release window.
 
 ---
 
@@ -210,15 +211,25 @@ T029 + T030 + T031 → T032      # everything before docs
 
 # Phase 6: US4 (H2: T025 wired into the graph, not just prose)
 T013 → T025                    # US1 SKILL.md before the US4 sub-domain update to the same file
+
+# Phase 8: CLI distribution (FR-024, analyze H2)
+# T037 has NO dependencies — it touches packages/cli, not packages/underboard.
+# It can start immediately and runs in parallel with every other lane.
+# It does not block T032 (knowledge-adaptation docs are unrelated to .specify distribution).
 ```
 
 ### Self-Validation Checklist
 
-- [X] Every task ID in Dependencies exists in the task list above
+*Re-verified 2026-06-27 after adding T037 (.specify/ sync, FR-024). Final task count: 38 (T001–T037 + T022b).*
+
+- [X] Every task ID in Dependencies exists in the task list above (T001–T037 + T022b)
 - [X] No circular dependencies (A→B→A)
 - [X] No orphan task IDs referenced that don't exist
 - [X] Fan-in uses `+` only, fan-out uses `,` only
 - [X] No chained arrows on a single line
+- [X] T037 appears in the mermaid graph (standalone node, no edges — independent), in Parallel Lanes (lane 14), and in Agent Summary ([SETUP] = 5)
+- [X] Tool count unified at 9 across contracts/index.md, T034, and the mermaid fan-in (M1/H1 resolved)
+- [X] Agent Summary counts sum to 38: [SETUP]=5 + [BE]=21 + [DOC]=6 + [E2E]=6
 
 ---
 
@@ -264,6 +275,7 @@ graph LR
     T024 & T028 --> T036
     T004 & T006 & T007 & T008 & T015 & T016 & T017 & T020 & T021 & T022b & T022 & T023 & T026 & T027 & T034 --> T031
     T029 & T030 & T031 --> T032
+    T037
 ```
 
 ---
@@ -285,6 +297,7 @@ graph LR
 | 11 | [E2E] Polish | T034 (MCP registration), T035 (preservation), T036 (sync security) | T002, T006-T008, T015-T017, T020-T023, T022b, T026-T028 |
 | 12 | [BE] Polish | T031 | T004, T006-T008, T015-T017, T020-T023, T022b, T026-T027, T034 |
 | 13 | [DOC] Polish | T032 | T029, T030, T031 |
+| 14 | [SETUP] CLI distribution | T037 (.specify/ → packages/cli) | — (independent, starts immediately) |
 
 ---
 
@@ -292,9 +305,9 @@ graph LR
 
 | Agent | Task Count | Can Start After |
 |-------|-----------|-----------------|
-| [SETUP] | 4 | immediately (T001-T003), T013 (T033) |
+| [SETUP] | 5 | immediately (T001-T003, T037), T013 (T033) |
 | [BE] | 21 | T001, T002 |
-| [DOC] | 5 | T009 (Phase 2 complete) |
+| [DOC] | 6 | T009 (Phase 2 complete) |
 | [E2E] | 6 | T006, T007, T008 (Phase 3) |
 
 **Critical Path**: T001 → T004 → T006 → T009 → T010 → T011 → T012 → T013 → T033 → T025 → T029 → T034 → T035 → T032 (longest chain; now includes skill registration T033 and MCP registration T034)
@@ -307,9 +320,9 @@ graph LR
 
 | Agent | Subagent | Skills | Input Context | Tasks | Files |
 |-------|----------|--------|---------------|-------|-------|
-| `[SETUP]` | orchestrator | — | plan.md §Project Structure, data-model.md (migration 004_knowledge_profiles.sql), contracts/index.md | T001, T002, T003 | `packages/underboard/src/storage/migrations/`, `packages/underboard/src/tools/knowledge/`, `packages/underboard/tests/` |
+| `[SETUP]` | orchestrator | — | plan.md §Project Structure + §CLI Distribution (FR-024), data-model.md (migration 004_knowledge_profiles.sql), contracts/index.md, helpers.config.ts (speckit target) | T001, T002, T003, T037 | `packages/underboard/src/storage/migrations/`, `packages/underboard/src/tools/knowledge/`, `packages/underboard/tests/`, `packages/cli/src/cli/init.ts`, `packages/cli/package.json` |
 | `[BE]` | backend-specialist | clean-code, nodejs-best-practices, api-patterns, database-design, system-design-patterns, mcp-builder, lint-and-validate | plan.md §Tech Context + §Project Structure, data-model.md (all entities incl. sync salts/PBKDF2 + proposal fields), contracts/ (all 9 tools incl. profile-record-signal.md), research.md (decisions D001-D010), coding-standards §8 (typed services, parameterized queries) | T004-T009, T015-T018, T019-T024, T022b, T026-T028, T031 | `packages/underboard/src/knowledge/`, `packages/underboard/src/tools/knowledge/`, `packages/underboard/src/cli/`, `packages/underboard/tests/knowledge/`, `packages/underboard/src/storage/migrations/` |
-| `[DOC]` | documentation-writer | clean-code, documentation-templates | plan.md §Tech Context, contracts/profile-get.md §Agent Behavior, contracts/profile-record-signal.md (F2: skill must teach record-signal), research.md D006 (skill architecture), spec.md §US1 acceptance scenarios, spec.md FR-022 (registration requirement) | T010-T013, T025 | `.claude/skills/knowledge-adaptation/` |
+| `[DOC]` | documentation-writer | clean-code, documentation-templates | plan.md §Tech Context, contracts/profile-get.md §Agent Behavior, contracts/profile-record-signal.md (F2: skill must teach record-signal), research.md D006 (skill architecture), spec.md §US1 acceptance scenarios, spec.md FR-022 (registration requirement) | T010-T013, T025, T032 | `.claude/skills/knowledge-adaptation/`, `README.md`, `packages/cli/README.md` |
 | `[E2E]` | test-engineer | clean-code, testing-patterns, tdd-workflow, lint-and-validate | plan.md §Project Structure (tests/), quickstart.md (all test scenarios), contracts/ (all 9 tool contracts incl. sync atomicity/error-codes, record-signal capture), spec.md FR-023 (sync security params) | T014, T029, T030, T034, T035, T036 | `packages/underboard/tests/integration/`, `packages/underboard/tests/knowledge/`, `packages/underboard/src/server/mcp-server.ts` |
 
 ---

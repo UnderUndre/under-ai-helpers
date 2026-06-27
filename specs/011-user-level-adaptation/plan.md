@@ -114,6 +114,20 @@ packages/underboard/
 
 **Structure Decision**: The underboard MCP server already follows a modular structure (`src/storage/`, `src/tools/`, `src/cli/`). The knowledge subsystem adds a new `src/knowledge/` service layer (separate from `src/tools/` to keep tool definitions thin — they delegate to services). The new migration file slots into the existing sequential migration pattern. The agent-side skill lives in `.claude/skills/knowledge-adaptation/` following the existing skill package convention (directory with `SKILL.md` + supporting files).
 
+### CLI Distribution (FR-024, analyze H2)
+
+The Speckit pipeline infrastructure (`.specify/` directory: scripts, templates, checklists, `memory/constitution.md`) must reach consumer projects via the clai-helpers CLI. `helpers.config.ts` already defines the `speckit` target (identity transformer, source `.specify/**/*`) — the gap is purely in the CLI package's defaults and publish manifest. Three small changes in `packages/cli/`:
+
+```text
+packages/cli/
+├── src/cli/
+│   └── init.ts          # MODIFIED — add "speckit" to default targets: "claude,copilot,gemini" → "claude,copilot,gemini,speckit"
+├── package.json         # MODIFIED — add ".specify" to "files": ["dist","bin"] → ["dist","bin",".specify"]
+└── tests/               # NEW assertion — clai-helpers init in a temp consumer repo produces .specify/ with memory/constitution.md + templates/
+```
+
+**Why bundled here**: FR-024 was requested alongside the user-level adaptation work and shares the same release window. The change is independent of the underboard knowledge subsystem (no shared code, no dependency edge) — it is a parallel track executed by T037.
+
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
