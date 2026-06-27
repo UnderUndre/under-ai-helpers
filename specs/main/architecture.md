@@ -22,7 +22,7 @@ Authoritative content. Edits start here.
 |------|-----------------|
 | `.claude/commands/` | 75+ Claude Code slash commands (`/speckit.*`, `/bump`, `/commit`, `/brainstorm`, ...). |
 | `.claude/agents/` | 27+ specialist agent definitions (`backend-specialist`, `debugger`, `orchestrator`, ...). YAML frontmatter + markdown body. |
-| `.claude/skills/` | 43+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. |
+| `.claude/skills/` | 44+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. Includes `knowledge-adaptation/` — agent-side adaptation skill for user-level knowledge level consumption. |
 | `CLAUDE.md` | Root persona/operating instructions for Claude Code. Cross-links to coding standards, persona, and this spec. |
 | `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output) + `packs` section (pack membership mapping + marketplace metadata, feature 006). |
 | `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). Plus `dialog-capture.mjs` — Stop-hook wrapper that spawns the dialog-capture pipeline (feature 007). |
@@ -96,7 +96,8 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `src/retrieval/` | Lexical retrieval only: BM25 (FTS5). Semantic search delegated to Honcho backend. |
 | `src/project/` | CWD → project ID detector (Git root / `.under-project` marker). |
 | `src/events/` | In-process event bus for SSE push to dashboard clients. |
-| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, get, delete, deep-recall), tasks (create, update, list, assigned, archive), activity log. |
+| `src/tools/` | MCP tool implementations: memory (write, recall, cross-project, list, get, delete, deep-recall), tasks (create, update, list, assigned, archive), activity log, knowledge profile (get, set, config, signals, quiz, export, forget, sync). |
+| `src/knowledge/` | Knowledge adaptation service layer (feature 011): profile-service, inference-engine, quiz-engine, signal-retention, export-service, sync-service. |
 | `src/cli/` | Commander CLI: start, stop, status, export, import. |
 | `dashboard/` | Static HTML/CSS/JS SPA (vanilla, no build step). Kanban board, memory feed, activity log. |
 | `tests/` | Unit + integration tests (vitest). |
@@ -114,7 +115,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `.specify/memory/constitution.md` | Governance: principles + workflow + amendments. Loaded by `/speckit.plan` Constitution Check gate. |
 | `.specify/scripts/{powershell,bash}/` | Scripts that `/speckit.*` commands invoke. PowerShell is source of truth on Windows; bash ports for *nix parity. |
 | `.specify/templates/` | Spec / plan / tasks / checklist templates. |
-| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. `specs/007-dialog-capture/` — Phase 2 of 006/US7: CC transcript capture, normalization, INDEX auto-population, Honcho Session ingestion with quarantine window. `specs/008-memory-backend-honcho/` — backend seam + Honcho integration. `specs/023-language-guard-validator-leftovers/` — LanguageGuardValidator API layer: config CRUD, enabled toggle, configVersion optimistic locking, audit log API. |
+| `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. `specs/007-dialog-capture/` — Phase 2 of 006/US7: CC transcript capture, normalization, INDEX auto-population, Honcho Session ingestion with quarantine window. `specs/008-memory-backend-honcho/` — backend seam + Honcho integration. `specs/011-user-level-adaptation/` — user-level knowledge adaptation subsystem: privacy-preserving per-project profiles, switchable assessment modes, per-sub-domain level scoping, multi-machine sync via encrypted file transport, agent-side skill for explanation depth adaptation. `specs/023-language-guard-validator-leftovers/` — LanguageGuardValidator API layer: config CRUD, enabled toggle, configVersion optimistic locking, audit log API. |
 | `specs/main/` | **This directory.** Project-wide architecture + requirements (canonical, not feature-scoped). |
 
 Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage.{sh,ps1}`, idempotent via `--points-at HEAD`. `/speckit.diff` and `/speckit.retrospective` read these tags.
