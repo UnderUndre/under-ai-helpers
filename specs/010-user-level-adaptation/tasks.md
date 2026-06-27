@@ -1,6 +1,6 @@
 # Tasks: User-Level Knowledge Adaptation
 
-**Input**: Design documents from `/specs/011-user-level-adaptation/`
+**Input**: Design documents from `/specs/010-user-level-adaptation/`
 **Prerequisites**: plan.md (required), spec.md (required), research.md, data-model.md, contracts/
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story. Each task is assigned to a specialist agent for domain-aware execution.

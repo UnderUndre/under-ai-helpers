@@ -1,7 +1,7 @@
 # Implementation Plan: User-Level Knowledge Adaptation
 
-**Branch**: `011-user-level-adaptation` | **Date**: 2026-06-25 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/specs/011-user-level-adaptation/spec.md`
+**Branch**: `010-user-level-adaptation` | **Date**: 2026-06-25 | **Spec**: [spec.md](spec.md)
+**Input**: Feature specification from `/specs/010-user-level-adaptation/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
@@ -41,7 +41,7 @@ No NEEDS CLARIFICATION — all technical decisions are derivable from the existi
 - **Principle VI (Cross-AI Review)**: Will be enforced at `/speckit.implement` — no action now.
 - **Principle VII (Artifact Versioning)**: Will snapshot after this plan completes.
 - **Principle VIII (Self-Maintaining)**: No violation. Feature does not add learning infrastructure.
-- **Principle IX (Two-Phase Review)**: **DEVIATION — override required.** The prior text claimed the bare-slug branch `011-user-level-adaptation` was "grandfathered." That claim was false on two counts (per `reviews/analyze.md` C1, re-verified this pass): (a) the actual branch is `spec/011-user-level-adaptation`, not `011-…` and not `specs/011-…` — it sits in an inconsistent middle ground between the old `feature/<N>-<slug>` convention and the IX-mandated `specs/<slug>` planning branch; (b) the feature was created 2026-06-25, one month *after* Principle IX was ratified (constitution v1.5.0, 2026-05-25), so the grandfather clause ("branches that exist before the change") cannot apply. 011 is a new feature and Principle IX's MUST (planning artifacts on `specs/<slug>`, implementation on `<slug>` from main) applies. Rather than disruptively rename/rebranch all artifacts to `specs/011-…` mid-cycle (which would churn every review/snapshot reference and create more process risk than value), this plan records the deviation honestly and will pass `--override-gate "Principle IX: branch is spec/011-user-level-adaptation (not the required specs/011-…); false-grandfather claim corrected in plan.md; artifacts live on spec/011-user-level-adaptation, implementation will branch from main per IX spirit"` at `/speckit.implement`, logged to `reviews/_gate-override.md`. Future features MUST use the two-phase `specs/<slug>` → `<slug>` pattern.
+- **Principle IX (Two-Phase Review)**: **DEVIATION — override required.** The prior text claimed the bare-slug branch `010-user-level-adaptation` was "grandfathered." That claim was false on two counts (per `reviews/analyze.md` C1, re-verified this pass): (a) the actual branch is `spec/010-user-level-adaptation`, not `011-…` and not `specs/011-…` — it sits in an inconsistent middle ground between the old `feature/<N>-<slug>` convention and the IX-mandated `specs/<slug>` planning branch; (b) the feature was created 2026-06-25, one month *after* Principle IX was ratified (constitution v1.5.0, 2026-05-25), so the grandfather clause ("branches that exist before the change") cannot apply. 011 is a new feature and Principle IX's MUST (planning artifacts on `specs/<slug>`, implementation on `<slug>` from main) applies. Rather than disruptively rename/rebranch all artifacts to `specs/011-…` mid-cycle (which would churn every review/snapshot reference and create more process risk than value), this plan records the deviation honestly and will pass `--override-gate "Principle IX: branch is spec/010-user-level-adaptation (not the required specs/011-…); false-grandfather claim corrected in plan.md; artifacts live on spec/010-user-level-adaptation, implementation will branch from main per IX spirit"` at `/speckit.implement`, logged to `reviews/_gate-override.md`. Future features MUST use the two-phase `specs/<slug>` → `<slug>` pattern.
 
 **Verdict**: CLEAR-with-override (Principle IX deviation documented, override to be requested at implement gate).
 
@@ -50,7 +50,7 @@ No NEEDS CLARIFICATION — all technical decisions are derivable from the existi
 ### Documentation (this feature)
 
 ```text
-specs/011-user-level-adaptation/
+specs/010-user-level-adaptation/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
@@ -132,7 +132,7 @@ packages/cli/
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-- **Principle IX deviation**: This feature's planning artifacts live on the branch `spec/011-user-level-adaptation` instead of the required `specs/011-user-level-adaptation` planning branch (a naming inconsistency between the pre-IX `feature/<N>-<slug>` convention and the IX-mandated `specs/<slug>` form).
+- **Principle IX deviation**: This feature's planning artifacts live on the branch `spec/010-user-level-adaptation` instead of the required `specs/010-user-level-adaptation` planning branch (a naming inconsistency between the pre-IX `feature/<N>-<slug>` convention and the IX-mandated `specs/<slug>` form).
 - **Why not corrected in-place**: Re-branching mid-cycle would churn all existing review/snapshot references and create more process risk than value for this already-reviewed feature.
 - **Mitigation**: The deviation is documented in `plan.md §Constitution Check`, and `/speckit.implement` must use `--override-gate "<reason>"` so the exception is explicit and logged to `reviews/_gate-override.md`.
 - **Future rule**: New features MUST use the two-phase `specs/<slug>` → `<slug>` branch pattern with no grandfather claim.

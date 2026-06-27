@@ -1,4 +1,4 @@
-# SpecKit Review: 011-user-level-adaptation
+# SpecKit Review: 010-user-level-adaptation
 
 **Reviewer**: trae
 **Reviewed at**: 2026-06-25T14:02:00Z
