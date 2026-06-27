@@ -3,7 +3,7 @@
 **MCP Tool**: `knowledge_profile_quiz`  
 **Module**: `packages/underboard/src/tools/knowledge/profile-quiz.ts`
 
-Manages the calibration quiz lifecycle. Trigger a quiz, submit an answer, or complete the quiz. The quiz engine generates leveled questions based on current uncertainty.
+Manages the calibration quiz lifecycle. Trigger a quiz, submit an answer, or complete the quiz. The quiz engine generates leveled questions based on current uncertainty. Quiz session state is ephemeral-in-memory within the long-lived MCP process; restarting the server resets any active quiz (no `KnowledgeQuizSession` table is defined — only the derived level is persisted to `KnowledgeProfile` on completion).
 
 ## Input
 

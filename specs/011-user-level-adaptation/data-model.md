@@ -16,17 +16,17 @@ The per-project record of the user's knowledge level. One row per project (ident
 | `level_internal` | REAL NOT NULL | Continuous value 0.0–1.0 (lossless internal representation) |
 | `level_source` | TEXT NOT NULL | Source of current level: `self-declared`, `inferred`, `quiz-derived` |
 | `display_scale` | TEXT NOT NULL DEFAULT '3' | Active display scale: `3` (3-step), `5` (5-step), `continuous` |
-| `retention_days` | INTEGER | Signal retention policy: NULL=forever, 0=off, 30, 90 |
+| `retention_days` | INTEGER DEFAULT 30 | Signal retention policy: NULL=forever, 0=off, 30, 90. DEFAULT 30 enforces the most privacy-protective non-zero option at the DB layer (FR-015) |
 | `inference_threshold_n` | INTEGER NOT NULL DEFAULT 10 | N signals before re-evaluation (FR-009) |
 | `sync_enabled` | INTEGER NOT NULL DEFAULT 0 | Boolean — opt-in sync |
 | `sync_transport` | TEXT | Transport type: `encrypted-file`, NULL if sync disabled |
-| `sync_passphrase_hash` | TEXT | PBKDF2 hash of sync passphrase (for verification only — never stored in plaintext). Parameters per FR-023: ≥600,000 iterations, per-profile random salt |
-| `sync_passphrase_salt` | TEXT NOT NULL IF sync_enabled | Base64 random salt (≥16 bytes) used for passphrase verification hash derivation. Distinct from the encryption-key salt below |
-| `sync_encryption_salt` | TEXT NOT NULL IF sync_enabled | Base64 random salt (≥16 bytes) used for AES-256-GCM key derivation. MUST NOT be reused as the verification-hash salt |
+| `sync_encryption_salt` | TEXT NOT NULL IF sync_enabled | Base64 random salt (≥16 bytes) used for AES-256-GCM key derivation. Passphrase correctness is verified solely via the GCM authentication tag — no separate verification hash is stored (FR-023) |
 | `sync_pbkdf2_iterations` | INTEGER NOT NULL IF sync_enabled | Iteration count for PBKDF2 (≥600000 per FR-023). Stored so old profiles can be migrated if the floor rises |
 | `proposed_level_internal` | REAL | Pending hybrid-mode revision target (NULL when no proposal active). Set by inference engine; promoted to `level_internal` only on user accept (FR-019) |
 | `proposed_level_source` | TEXT | Source of the pending proposal: `inferred`. NULL when no proposal active |
 | `proposed_at` | TEXT | ISO-8601 timestamp of when the proposal was generated. Used for staleness (FR-019): a proposal older than the staleness window MUST be re-evaluated, not honored |
+| `last_inference_at` | TEXT | ISO-8601 timestamp of the last evaluation run. Used to compute the lazy evaluation tick boundary (FR-009): the next `profile_record_signal` tick compares signals captured since this timestamp against `inference_threshold_n` |
+| `signals_since_last_eval` | INTEGER NOT NULL DEFAULT 0 | Counter of newly accumulated signals since `last_inference_at`. Incremented on each `profile_record_signal`; reset to 0 when an evaluation run fires (inferred refresh or hybrid proposal). Drives the lazy tick decision without scanning the signal set on every write |
 | `created_at` | TEXT NOT NULL | ISO-8601 timestamp |
 | `updated_at` | TEXT NOT NULL | ISO-8601 timestamp |
 
@@ -37,7 +37,7 @@ The per-project record of the user's knowledge level. One row per project (ident
 - `level_internal` CHECK (0.0 <= level_internal <= 1.0)
 - `project_id` UNIQUE (one profile per project)
 - `proposed_level_internal` CHECK (proposed_level_internal IS NULL OR (0.0 <= proposed_level_internal <= 1.0))
-- Sync fields (`sync_passphrase_hash`, `sync_passphrase_salt`, `sync_encryption_salt`, `sync_pbkdf2_iterations`) are all-required-or-all-absent based on `sync_enabled`
+- Sync fields (`sync_encryption_salt`, `sync_pbkdf2_iterations`) are all-required-or-all-absent based on `sync_enabled`
 - Per FR-023: the derived AES key MUST be zeroed from process memory immediately after encryption/decryption; the passphrase MUST NOT be cached in the long-lived MCP server process
 
 **Relationships**:
