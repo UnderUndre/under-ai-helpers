@@ -168,7 +168,7 @@ export async function pullProfile(db: Database.Database, projectId: string, pass
     throw new Error('CORRUPT_SYNC_FILE');
   }
 
-  if (remote.level_internal === undefined || !remote.display_scale || !remote.assessment_mode) {
+  if (remote.level_internal === undefined || !remote.display_scale || !remote.assessment_mode || !remote.updated_at) {
     throw new Error('CORRUPT_SYNC_FILE');
   }
 
@@ -278,7 +278,10 @@ export function resolveConflict(db: Database.Database, projectId: string, resolu
     db.prepare('UPDATE knowledge_sync_metadata SET conflict_count = 0, last_conflict_at = ? WHERE profile_id = ?').run(now, profileRow.id);
   } else if (resolution === 'remote') {
     // Read remote version from config
-    const conf = JSON.parse(meta.transport_config);
+    const conf = meta.transport_config ? JSON.parse(meta.transport_config) : null;
+    if (!conf || !conf.remoteVersion) {
+      throw new Error('CORRUPT_SYNC_METADATA');
+    }
     const remote = conf.remoteVersion;
 
     db.prepare('UPDATE knowledge_profiles SET level_internal = ?, display_scale = ?, assessment_mode = ?, level_source = ?, updated_at = ? WHERE id = ?')
