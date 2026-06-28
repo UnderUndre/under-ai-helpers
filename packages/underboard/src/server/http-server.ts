@@ -10,6 +10,7 @@ import { createEventBus, type SseClient } from "#events/event-bus.js";
 import { getEmbeddingStatus } from "#embedding/embedding-service.js";
 import { initializeEmbedding } from "#embedding/embedding-service.js";
 import { createDatabase, closeDatabase } from "#storage/database.js";
+import type { UnderboardConfig } from "#cli/config.js";
 
 let db: Database.Database;
 let server: http.Server;
@@ -45,12 +46,12 @@ function authMiddleware(req: http.IncomingMessage): boolean {
   return validateBearerToken(auth, token);
 }
 
-export async function startServer(options: { port: number; dbPath?: string; stdio?: boolean }) {
+export async function startServer(config: UnderboardConfig, options: { stdio?: boolean }) {
   token = await getOrCreateToken();
-  db = createDatabase(options.dbPath);
+  db = createDatabase(config.db_path);
   eventBus = createEventBus(db);
 
-  const mcpServer = createMcpServer(db, false);
+  const mcpServer = createMcpServer(db, config);
 
   if (options.stdio) {
     consola.options.stdout = process.stderr;
@@ -61,7 +62,7 @@ export async function startServer(options: { port: number; dbPath?: string; stdi
   }
 
   server = http.createServer(async (req, res) => {
-    const port = options.port;
+    const port = config.port;
 
     if (!validateHost(req, port)) {
       res.writeHead(403, { "Content-Type": "application/json" });
@@ -262,19 +263,19 @@ export async function startServer(options: { port: number; dbPath?: string; stdi
 
   server.on("error", (err: any) => {
     if (options.stdio) {
-      consola.warn(`Failed to start Dashboard server (port ${options.port} might be in use):`, err.message);
+      consola.warn(`Failed to start Dashboard server (port ${config.port} might be in use):`, err.message);
     } else {
       consola.error("Dashboard server error:", err);
       process.exit(1);
     }
   });
 
-  server.listen(options.port, "127.0.0.1", () => {
-    consola.success(`Underboard listening on http://127.0.0.1:${options.port}`);
-    consola.info(`Dashboard: http://127.0.0.1:${options.port}/?token=${token}`);
+  server.listen(config.port, "127.0.0.1", () => {
+    consola.success(`Underboard listening on http://127.0.0.1:${config.port}`);
+    consola.info(`Dashboard: http://127.0.0.1:${config.port}/?token=${token}`);
   });
 
-  initializeEmbedding().catch(() => {});
+  initializeEmbedding(config.embedding).catch(() => {});
 }
 
 export function stopServer() {

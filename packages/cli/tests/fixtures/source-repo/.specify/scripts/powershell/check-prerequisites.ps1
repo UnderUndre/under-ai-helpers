@@ -1,0 +1,1 @@
+# Mock prerequisites check

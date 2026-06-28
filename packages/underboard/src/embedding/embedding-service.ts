@@ -1,45 +1,45 @@
 import { promises as fs } from "node:fs";
-import path from "node:path";
-import os from "node:os";
 import consola from "consola";
 
-export type EmbeddingStatus = "loading" | "ready" | "failed";
+export type EmbeddingStatus = "loading" | "active" | "disabled" | "failed";
 
 let status: EmbeddingStatus = "loading";
 let session: any = null;
-
-const MODEL_DIR = path.join(os.homedir(), ".underboard", "models");
-const MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2.onnx";
-const MODEL_PATH = path.join(MODEL_DIR, MODEL_NAME);
 
 export function getEmbeddingStatus(): EmbeddingStatus {
   return status;
 }
 
-export async function initializeEmbedding(): Promise<void> {
+export async function initializeEmbedding(config: { model_path?: string; model_name: string }): Promise<void> {
+  if (!config.model_path) {
+    consola.warn("Embedding model path not configured. Semantic features disabled.");
+    status = "disabled";
+    return;
+  }
+
   try {
-    const modelExists = await fs.access(MODEL_PATH).then(() => true).catch(() => false);
+    const modelExists = await fs.access(config.model_path).then(() => true).catch(() => false);
     if (!modelExists) {
-      consola.warn(`Embedding model not found at ${MODEL_PATH}. Run 'underboard model fetch' to download.`);
+      consola.error(`Embedding model not found at ${config.model_path}. Semantic features disabled.`);
       status = "failed";
       return;
     }
 
     const ort = await import("onnxruntime-node");
-    session = await ort.InferenceSession.create(MODEL_PATH, {
+    session = await ort.InferenceSession.create(config.model_path, {
       executionProviders: ["cpu"],
       graphOptimizationLevel: "all",
     });
-    status = "ready";
-    consola.success("Embedding model loaded");
+    status = "active";
+    consola.success(`Embedding model "${config.model_name}" loaded`);
   } catch (err) {
-    consola.error("Failed to load embedding model:", err);
+    consola.error(`Failed to load embedding model from ${config.model_path}:`, err);
     status = "failed";
   }
 }
 
 export async function embed(text: string): Promise<Float32Array | null> {
-  if (status !== "ready" || !session) return null;
+  if (status !== "active" || !session) return null;
 
   try {
     const ort = await import("onnxruntime-node");
@@ -102,4 +102,3 @@ function tokenize(text: string): { ids: number[]; attentionMask: number[] } {
   const attentionMask = ids.map(() => 1);
   return { ids, attentionMask };
 }
-

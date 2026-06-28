@@ -1,11 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import Database from "better-sqlite3";
-import { memoryWrite } from "#tools/memory/write.js";
-import { memoryRecall } from "#tools/memory/recall.js";
-import { memoryListRecent } from "#tools/memory/list-recent.js";
-import { memoryGet } from "#tools/memory/get.js";
-import { memoryDelete } from "#tools/memory/delete.js";
+import { createBackend } from "../memory-backend/backend-factory.js";
+import type { UnderboardConfig } from "../cli/config.js";
 import { taskCreate } from "#tools/tasks/create.js";
 import { taskUpdate } from "#tools/tasks/update.js";
 import { taskList } from "#tools/tasks/list.js";
@@ -13,6 +10,15 @@ import { taskListAssigned } from "#tools/tasks/list-assigned.js";
 import { taskArchive } from "#tools/tasks/archive.js";
 import { detectProject } from "#project/detector.js";
 import { upsertProject } from "#storage/project-store.js";
+import { handler as profileGetHandler, schema as profileGetSchema } from "../tools/knowledge/profile-get.js";
+import { handler as profileSetHandler, schema as profileSetSchema } from "../tools/knowledge/profile-set.js";
+import { handler as profileConfigHandler, schema as profileConfigSchema } from "../tools/knowledge/profile-config.js";
+import { handler as profileExportHandler, schema as profileExportSchema } from "../tools/knowledge/profile-export.js";
+import { handler as profileForgetHandler, schema as profileForgetSchema } from "../tools/knowledge/profile-forget.js";
+import { handler as profileSyncHandler, schema as profileSyncSchema } from "../tools/knowledge/profile-sync.js";
+import { handler as profileSignalsHandler, schema as profileSignalsSchema } from "../tools/knowledge/profile-signals.js";
+import { handler as profileRecordSignalHandler, schema as profileRecordSignalSchema } from "../tools/knowledge/profile-record-signal.js";
+import { handler as profileQuizHandler, schema as profileQuizSchema } from "../tools/knowledge/profile-quiz.js";
 
 export interface ToolContext {
   project_id: string;
@@ -20,7 +26,14 @@ export interface ToolContext {
   cwd: string;
 }
 
-export function createMcpServer(db: Database.Database, vecAvailable: boolean = false) {
+export function createMcpServer(db: Database.Database, config: UnderboardConfig) {
+  const { backend } = createBackend(db, {
+    type: "honcho",
+    honcho_endpoint: config.honcho.endpoint,
+    honcho_token: config.honcho.token,
+    honcho_timeout_ms: config.honcho.timeout_ms,
+  });
+
   const server = new McpServer({
     name: "underboard",
     version: "0.1.0",
@@ -43,7 +56,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     tags: z.array(z.string()).optional().describe("Optional tags"),
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
-    const result = memoryWrite(db, params, ctx);
+    const result = await backend.write(params, ctx);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
@@ -53,7 +66,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     threshold: z.number().optional().describe("Minimum score threshold (default 0.3)"),
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
-    const result = await memoryRecall(db, params, ctx, vecAvailable);
+    const result = await backend.recall(params, ctx);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
@@ -61,14 +74,17 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     limit: z.number().optional().describe("Max entries (default 20)"),
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
-    const result = memoryListRecent(db, params ?? {}, ctx);
+    const result = await backend.listRecent(params ?? {}, ctx);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
   server.tool("memory_get", "Get a full memory entry by ID", {
     id: z.string().describe("Memory entry ID"),
   }, async (params: any) => {
-    const result = memoryGet(db, params);
+    const result = await backend.get(params.id);
+    if (!result) {
+      throw new Error("ENTRY_NOT_FOUND: memory entry not found");
+    }
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
@@ -76,7 +92,7 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
     id: z.string().describe("Memory entry ID"),
   }, async (params: any, extra: any) => {
     const ctx = extractContext(extra);
-    const result = memoryDelete(db, params, ctx);
+    const result = await backend.delete(params.id, ctx);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
   });
 
@@ -132,6 +148,53 @@ export function createMcpServer(db: Database.Database, vecAvailable: boolean = f
   }, async (params: any) => {
     const result = taskArchive(db, params);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
+  });
+
+  // Knowledge profile tools
+  server.tool("knowledge_profile_get", "Get knowledge profile for current project (optional domain)", profileGetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileGetHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_set", "Set knowledge profile level for project (optional domain)", profileSetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSetHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_config", "Configure knowledge profile (display_scale, sync, retention, domains, accept/reject proposals)", profileConfigSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileConfigHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_export", "Export knowledge profile (anonymized)", profileExportSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileExportHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_forget", "Forget knowledge profile (destructive cascade delete)", profileForgetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileForgetHandler(db, params, ctx);
+  });
+
+  // Signals tools
+  server.tool("knowledge_profile_signals", "List recent signals and summary", profileSignalsSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSignalsHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_record_signal", "Record an observed signal for inference", profileRecordSignalSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileRecordSignalHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_quiz", "Run a short quiz to declare proficiency (start/answer/status)", profileQuizSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileQuizHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_sync", "Synchronize profile with encrypted transport (push, pull, resolve conflicts)", profileSyncSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSyncHandler(db, params, ctx);
   });
 
   return server;

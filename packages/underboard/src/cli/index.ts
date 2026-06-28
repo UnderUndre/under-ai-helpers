@@ -17,16 +17,73 @@ program
   .description("Start the Underboard service")
   .option("--port <port>", "HTTP port")
   .option("--stdio", "Run MCP server over STDIO")
+  .option("--db-path <path>", "Database file path")
+  .option("--honcho-endpoint <url>", "Honcho endpoint")
+  .option("--honcho-token <token>", "Honcho token")
+  .option("--honcho-timeout <ms>", "Honcho timeout in ms")
+  .option("--embedding-model-name <name>", "Embedding model name")
+  .option("--embedding-model-path <path>", "Embedding model path")
+  .option("--llm-endpoint <url>", "LLM endpoint")
+  .option("--llm-api-key <key>", "LLM API key")
+  .option("--llm-model <model>", "LLM model name")
   .action(async (opts) => {
     const { startServer } = await import("#server/http-server.js");
-    const { loadConfig } = await import("./config.js");
-    const config = await loadConfig();
-    let port = opts.port ? Number(opts.port) : process.env.PORT ? Number(process.env.PORT) : config.port;
-    if (!port || port <= 0) {
-      console.error("Invalid port specified");
-      process.exit(1);
+    const { loadConfig, redactConfig } = await import("./config.js");
+
+    const overrides: any = {};
+    if (opts.port !== undefined) {
+      const val = Number(opts.port);
+      if (!Number.isFinite(val) || val <= 0) {
+        console.error(`Invalid port specified: "${opts.port}"`);
+        process.exit(1);
+      }
+      overrides.port = val;
     }
-    await startServer({ port, dbPath: config.db_path, stdio: opts.stdio });
+    if (opts.dbPath !== undefined) overrides.db_path = opts.dbPath;
+
+    // honcho
+    if (opts.honchoEndpoint !== undefined || opts.honchoToken !== undefined || opts.honchoTimeout !== undefined) {
+      overrides.honcho = {};
+      if (opts.honchoEndpoint !== undefined) overrides.honcho.endpoint = opts.honchoEndpoint;
+      if (opts.honchoToken !== undefined) overrides.honcho.token = opts.honchoToken;
+      if (opts.honchoTimeout !== undefined) {
+        const val = Number(opts.honchoTimeout);
+        if (!Number.isFinite(val) || val < 0) {
+          console.error(`Invalid honcho timeout specified: "${opts.honchoTimeout}"`);
+          process.exit(1);
+        }
+        overrides.honcho.timeout_ms = val;
+      }
+    }
+
+    // embedding
+    if (opts.embeddingModelName !== undefined || opts.embeddingModelPath !== undefined) {
+      overrides.embedding = {};
+      if (opts.embeddingModelName !== undefined) overrides.embedding.model_name = opts.embeddingModelName;
+      if (opts.embeddingModelPath !== undefined) overrides.embedding.model_path = opts.embeddingModelPath;
+    }
+
+    // llm
+    if (opts.llmEndpoint !== undefined || opts.llmApiKey !== undefined || opts.llmModel !== undefined) {
+      overrides.llm = {};
+      if (opts.llmEndpoint !== undefined) {
+        let endpoint = opts.llmEndpoint;
+        if (endpoint.endsWith("/chat/completions")) {
+          endpoint = endpoint.replace(/\/chat\/completions$/, "");
+        }
+        overrides.llm.endpoint = endpoint;
+      }
+      if (opts.llmApiKey !== undefined) overrides.llm.api_key = opts.llmApiKey;
+      if (opts.llmModel !== undefined) overrides.llm.model = opts.llmModel;
+    }
+
+    const config = await loadConfig(overrides);
+
+    // Echo configuration to stderr (redacted)
+    console.error("Starting Underboard with configuration:");
+    console.error(JSON.stringify(redactConfig(config), null, 2));
+
+    await startServer(config, { stdio: opts.stdio });
   });
 
 program
@@ -97,6 +154,65 @@ program
   .action(async (id) => {
     const { deleteTask } = await import("#cli/task-delete.js");
     await deleteTask(id);
+  });
+
+const profileCmd = program
+  .command("profile")
+  .description("Profile management commands");
+
+profileCmd
+  .command("status")
+  .description("Show profile status for a project")
+  .argument("<projectId>", "Project ID")
+  .action(async (projectId) => {
+    const { showProfileStatus } = await import("#cli/profile.js");
+    await showProfileStatus(projectId);
+  });
+
+profileCmd
+  .command("export")
+  .description("Export profile for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("[path]", "Output file path", "profile-export.json")
+  .action(async (projectId, path) => {
+    const { runProfileExport } = await import("#cli/profile.js");
+    await runProfileExport(projectId, path);
+  });
+
+profileCmd
+  .command("forget")
+  .description("Forget profile data for a project")
+  .argument("<projectId>", "Project ID")
+  .option("--confirm", "Confirm destructive operation")
+  .action(async (projectId, opts) => {
+    if (!opts.confirm) {
+      console.error("Use --confirm to confirm profile forget");
+      process.exit(1);
+    }
+    const { runProfileForget } = await import("#cli/profile.js");
+    await runProfileForget(projectId, true);
+  });
+
+profileCmd
+  .command("push")
+  .description("Push profile encrypted payload for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("<passphrase>", "Passphrase for AES encryption")
+  .argument("<path>", "Output file path")
+  .action(async (projectId, passphrase, path) => {
+    const { runProfilePush } = await import("#cli/profile.js");
+    await runProfilePush(projectId, passphrase, path);
+  });
+
+profileCmd
+  .command("pull")
+  .description("Pull and merge profile decrypted payload for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("<passphrase>", "Passphrase for AES decryption")
+  .argument("<path>", "Input file path")
+  .action(async (projectId, passphrase, path) => {
+    const { runProfilePull } = await import("#cli/profile.js");
+    await runProfilePull(projectId, passphrase, path);
   });
 
 program.parse();

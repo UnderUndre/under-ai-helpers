@@ -31,6 +31,7 @@ const TEST_MANIFEST: HelpersConfig = {
     "agents/**/*.md",
     "CLAUDE.md",
     "settings.json",
+    ".specify/**/*",
   ],
   targets: {
     claude: {
@@ -54,6 +55,11 @@ const TEST_MANIFEST: HelpersConfig = {
         { transformer: "claude-to-gemini-root", match: "CLAUDE.md", output: "GEMINI.md" },
       ],
     },
+    speckit: {
+      pipelines: [
+        { transformer: "identity", match: ".specify/**/*", output: "{{relativePath}}" },
+      ],
+    },
   },
 };
 
@@ -72,25 +78,51 @@ const CTX: {
 };
 
 /**
- * Discover source files from fixture .claude/ dir.
+ * Discover source files from fixture dir.
  */
 async function discoverFixtureFiles(): Promise<string[]> {
-  const claudeDir = join(FIXTURE_DIR, ".claude");
   const files: string[] = [];
 
-  async function walk(dir: string, base: string): Promise<void> {
-    const entries = await readdir(dir, { withFileTypes: true });
+  // 1. Walk .claude/ directory, adding paths relative to .claude/
+  const claudeDir = join(FIXTURE_DIR, ".claude");
+  async function walkClaude(dir: string, base: string): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
     for (const entry of entries) {
       const rel = base ? `${base}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
-        await walk(join(dir, entry.name), rel);
+        await walkClaude(join(dir, entry.name), rel);
       } else {
         files.push(rel);
       }
     }
   }
+  await walkClaude(claudeDir, "");
 
-  await walk(claudeDir, "");
+  // 2. Walk .specify/ directory, adding paths relative to FIXTURE_DIR/
+  const specifyDir = join(FIXTURE_DIR, ".specify");
+  async function walkSpecify(dir: string, base: string): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const rel = base ? `${base}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await walkSpecify(join(dir, entry.name), rel);
+      } else {
+        files.push(rel);
+      }
+    }
+  }
+  await walkSpecify(specifyDir, ".specify");
+
   return files.sort();
 }
 
@@ -98,15 +130,17 @@ async function discoverFixtureFiles(): Promise<string[]> {
  * Run all transformer pipelines and produce rendered files.
  */
 async function runFullInit(
-  targetNames: string[] = ["claude", "copilot", "gemini"],
+  targetNames: string[] = ["claude", "copilot", "gemini", "speckit"],
 ): Promise<RenderedFile[]> {
   await preloadAllTransformers(TEST_MANIFEST, targetNames);
 
-  const claudeDir = join(FIXTURE_DIR, ".claude");
   const sourceFiles = await discoverFixtureFiles();
   const parsedFiles = await Promise.all(
     sourceFiles.map(async (relPath) => {
-      const content = await readFile(join(claudeDir, relPath), "utf8");
+      const content = await readFile(
+        relPath.startsWith(".specify") ? join(FIXTURE_DIR, relPath) : join(FIXTURE_DIR, ".claude", relPath),
+        "utf8"
+      );
       return parseSourceFile(relPath, content);
     }),
   );
@@ -127,9 +161,7 @@ async function runFullInit(
 
         const files = Array.isArray(result) ? result : [result];
         for (const file of files) {
-          if (pipeline.transformer !== "identity") {
-            file.targetPath = resolveOutputPath(pipeline.output, parsed.sourcePath);
-          }
+          file.targetPath = resolveOutputPath(pipeline.output, parsed.sourcePath, pipeline.match);
           allRendered.push(file);
         }
       }
@@ -173,6 +205,9 @@ describe("init flow", () => {
     expect(paths).toContain(".gemini/commands/deploy.toml");
     expect(paths).toContain(".gemini/agents/debugger.md");
     expect(paths).toContain("GEMINI.md");
+
+    // Speckit target files (SC-002 / T037)
+    expect(paths).toContain(".specify/scripts/powershell/check-prerequisites.ps1");
   });
 
   it("generated files have AUTO-GENERATED header (except JSON)", async () => {

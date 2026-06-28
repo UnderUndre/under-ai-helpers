@@ -1,6 +1,6 @@
 # Feature Specification: User-Level Knowledge Adaptation
 
-**Feature Branch**: `011-user-level-adaptation`
+**Feature Branch**: `010-user-level-adaptation`
 **Created**: 2026-06-25
 **Status**: Draft
 **Input**: User description: "User-level knowledge adaptation subsystem: privacy-preserving storage, switchable assessment modes, per-project context, optional sync between machines. AI must determine the user's technical knowledge level and communicate/explain at that level so the user understands what's being discussed. The info may be sensitive to store in git (embarrassment, privacy concerns) — must be handled. Knowledge grows over time — must support updates (how and when?)."

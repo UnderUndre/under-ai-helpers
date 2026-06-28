@@ -55,7 +55,7 @@ export default defineCommand({
     },
     targets: {
       type: "string",
-      default: "claude,copilot,gemini",
+      default: "claude,copilot,gemini,speckit",
       description: "Comma-separated target names",
     },
     "source-config": {

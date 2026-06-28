@@ -6,6 +6,7 @@
 Triggers a sync operation for the current project's profile using the configured transport. Default transport is an AES-256-GCM encrypted JSON file (per FR-023: PBKDF2 ≥600k iterations with a per-profile random salt; passphrase requested per-operation, never cached, derived key zeroed after use; passphrase correctness verified solely via the GCM authentication tag — no separate verification hash stored; see envelope contract below for where the KDF parameters travel). On conflict, surfaces both versions for user resolution.
 
 **Atomicity and file-format guarantees**:
+
 - The sync file MUST use a self-describing envelope: a cleartext JSON header carrying the KDF salt (`sync_encryption_salt`), PBKDF2 iteration count (`sync_pbkdf2_iterations`), and the GCM nonce/IV, followed by the ciphertext and GCM authentication tag. A second machine pulling the file for the first time has no local profile row and therefore cannot retrieve these KDF parameters from its own DB — the envelope is what makes bootstrap pulls possible.
 - `push` writes the encrypted file atomically (temp file + `fs.rename`); an interrupted push never leaves a partial encrypted file on disk.
 - `pull` reads the KDF parameters from the file header, derives the key, and validates the GCM authentication tag and decrypted JSON structure **before** touching local profile state. The local profile is never mutated on a failed or decrypt-failed pull. **Source-of-truth rule (analyze F3)**: on a *successful* pull, the imported profile row's `sync_encryption_salt` and `sync_pbkdf2_iterations` columns are set from the file header — the file is authoritative for the crypto that produced it, and the local row is never re-derived from a fresh passphrase entry. This keeps the local DB row and the sync file consistent so a subsequent push re-uses the same parameters unless the user explicitly re-keys.
@@ -94,7 +95,7 @@ interface KnowledgeProfileSyncResolveOutput {
 
 ## Test Vectors
 
-1. Push to encrypted file → `{ success: true, file_path: "~/.underboard/sync/011-user-level-adaptation.enc" }`
+1. Push to encrypted file → `{ success: true, file_path: "~/.underboard/sync/010-user-level-adaptation.enc" }`
 2. Pull with no conflict → `{ success: true, conflict: false }`
 3. Pull with conflict → `{ conflict: true, remote_version: { level_internal: 0.8 }, local_version: { level_internal: 0.3 } }`
 4. Resolve keep-local → `{ resolution: "local", resulting_level: 0.3 }`

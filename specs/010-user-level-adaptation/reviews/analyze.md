@@ -1,4 +1,4 @@
-# SpecKit Analyze: 011-user-level-adaptation
+# SpecKit Analyze: 010-user-level-adaptation
 
 **Reviewer**: analyze (Claude self-consistency)
 **Reviewed at**: 2026-06-27T18:05:00+03:00 (re-run after remediation pass)
@@ -11,7 +11,7 @@
 
 | ID | Category | Severity | Status | Resolution Summary |
 |----|----------|----------|--------|--------------------|
-| A1 | Inconsistency / convention | MEDIUM | RESOLVED | plan.md:44 + §Complexity Tracking now accurately cite the branch as `spec/011-user-level-adaptation` (not `011-…`) and re-justify the IX deviation on the corrected premise. spec.md:3 branch declaration left as-is — the override path covers the drift; renaming the branch mid-cycle was rejected as higher-risk per plan.md. |
+| A1 | Inconsistency / convention | MEDIUM | RESOLVED | plan.md:44 + §Complexity Tracking now accurately cite the branch as `spec/010-user-level-adaptation` (not `011-…`) and re-justify the IX deviation on the corrected premise. spec.md:3 branch declaration left as-is — the override path covers the drift; renaming the branch mid-cycle was rejected as higher-risk per plan.md. |
 | C1 | Constitution alignment | HIGH | RESOLVED | Same edit as A1 — the override-rationale factual basis is now correct. The `--override-gate` string in plan.md:44 carries the accurate branch name. |
 | E1 | Coverage gap | HIGH | RESOLVED | T037 now has a Step 0 preflight: assert `helpers.config.ts` defines the `speckit` target with `transformer: "identity"` + `match: ".specify/**/*"`. Verified empirically at helpers.config.ts:82-90 (target exists, parameters match). The assertion is a regression guard against future drift. |
 | E2 | Coverage gap | MEDIUM | RESOLVED | T018 now asserts SC-007 (CASCADE-verified zero rows + no orphaned sync/export files post-forget). T029 now asserts SC-003 (`git status --porcelain` empty after profile init in a git fixture), SC-005 (two-project differentiation, no cross-leak), and FR-014 (corrupt-row degrades to neutral default, no throw). |
@@ -67,7 +67,7 @@
 
 ## Constitution Alignment Issues
 
-- **Principle IX (Two-Phase Review Flow)** — DEVIATION acknowledged in plan.md §Constitution Check. Override rationale now factually accurate (branch cited as `spec/011-user-level-adaptation`). The override path remains required at `/speckit.implement` via `--override-gate`; the audit trail will now carry correct facts. No open constitution issue.
+- **Principle IX (Two-Phase Review Flow)** — DEVIATION acknowledged in plan.md §Constitution Check. Override rationale now factually accurate (branch cited as `spec/010-user-level-adaptation`). The override path remains required at `/speckit.implement` via `--override-gate`; the audit trail will now carry correct facts. No open constitution issue.
 
 - **Principle VI (Cross-AI Review Gate)** — NOT evaluable by this command (it produces the analyze half). For the implement gate: post-remediation artifacts have **zero valid external reviewer PASS verdicts** — `reviews/trae.md` verdict was against superseded commit 7fdaf53 (per claude.md F12), `reviews/claude.md` is a self-review not an external reviewer, and the pass-2 crypto change plus this remediation pass invalidate any prior FR-023 coverage. The implement gate will need ≥2 fresh external reviewer PASS verdicts (Codex/Antigravity/Gemini CLI/Copilot — distinct providers) against the final commit.
 
@@ -118,7 +118,7 @@ notes: >
 
 | Finding | Files Touched | Summary |
 |---------|---------------|---------|
-| A1 + C1 | plan.md:44, plan.md:135 | Branch name corrected to `spec/011-user-level-adaptation`; override string + Complexity Tracking re-justified on accurate premise. |
+| A1 + C1 | plan.md:44, plan.md:135 | Branch name corrected to `spec/010-user-level-adaptation`; override string + Complexity Tracking re-justified on accurate premise. |
 | E1 | tasks.md T037 | Step 0 preflight: assert `speckit` target in helpers.config.ts (verified at :82-90). |
 | F1 | tasks.md T020, T022b | Lazy-tick fields named; reset/increment rules stated. |
 | F2 | tasks.md T019 | DB DEFAULT 30 ownership documented; service MUST NOT null. |

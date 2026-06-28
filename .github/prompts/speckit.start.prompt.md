@@ -18,16 +18,19 @@ ultrathink
 
 > "Каждый стояк в свою шахту. Иначе один сорвёт — все потечёт." — Valera, on isolation.
 
-Many SpecKit pipelines run in parallel (multiple features in flight, multi-AI review fan-out). Without explicit worktree isolation, two sessions can stomp on each other's `specs/<N>-<slug>/` directory, run `/speckit.implement` against a half-formed plan, or push commits onto the wrong branch.
+Many SpecKit pipelines run in parallel (multiple features in flight, multi-AI review fan-out). Without explicit worktree isolation, two sessions can stomp on each other's `specs/<slug>/` directory, run `/speckit.implement` against a half-formed plan, or push commits onto the wrong branch.
 
-`/speckit.start` is the new **canonical entry point** for a feature. It does what `/speckit.specify` step 2 used to do (branch + numbering) **before** any LLM work begins, in an explicit isolated worktree, so the rest of the pipeline can assume clean state.
+`/speckit.start` is the **canonical entry point** for a feature. It creates the `specs/<slug>` planning branch and worktree **before** any LLM work begins, so the rest of the pipeline can assume clean state.
+
+Per Principle IX (Two-Phase Review Flow), this creates the **planning branch** (`specs/<slug>`). The **implementation branch** (`<slug>`) is created later by `/speckit.implement` after the planning PR merges.
 
 ## Operating Constraints
 
 **Modifies the file system and git state**:
-- Creates a worktree at `.claude/worktrees/<N>-<slug>/`.
-- Creates a new branch `feature/<N>-<slug>` from `main` (or current default branch).
-- Initializes empty `specs/<N>-<slug>/` directory inside the worktree.
+
+- Creates a worktree at `.claude/worktrees/<slug>/`.
+- Creates a new branch `specs/<slug>` from `main` (or current default branch).
+- Initializes empty `specs/<slug>/` directory inside the worktree.
 
 **Does NOT** invoke any LLM-driven step (no spec.md generation). That's `/speckit.specify`'s job.
 
@@ -36,6 +39,7 @@ Many SpecKit pipelines run in parallel (multiple features in flight, multi-AI re
 ### 1. Generate Slug
 
 Same logic as `/speckit.specify` step 1:
+
 - Analyze `$ARGUMENTS` (feature description), extract meaningful keywords.
 - 2-4 words, action-noun format, preserve technical terms.
 - Examples:
@@ -45,28 +49,32 @@ Same logic as `/speckit.specify` step 1:
 
 Abort with usage if `$ARGUMENTS` is empty: "Provide a feature description, e.g., `/speckit.start cross-AI review pipeline`."
 
-### 2. Determine Next Feature Number
+### 2. Stale Branch Detection
 
-Acquire a numbering lock to avoid races between parallel `/speckit.start` sessions:
+Check if `specs/<slug>` already exists:
+
 ```bash
-exec 9>.specify/.lock || { echo "Another /speckit.start is running."; exit 1; }
-flock -n 9 || { echo "Lock held — another /speckit.start in progress."; exit 1; }
+git fetch --all --prune
+if git show-ref --verify --quiet "refs/heads/specs/${slug}" || \
+   git ls-remote --heads origin "refs/heads/specs/${slug}" | grep -q .; then
+  echo "⚠ Branch specs/${slug} already exists."
+  echo "Options:"
+  echo "  (r) Reuse — checkout existing worktree/branch"
+  echo "  (a) Abort — choose a different slug"
+  read -p "Choose [r/a]: " choice
+  case "$choice" in
+    r) echo "Reusing specs/${slug}"; exit 0 ;;
+    *) echo "Aborted."; exit 1 ;;
+  esac
+fi
 ```
-
-Inside the lock:
-- `git fetch --all --prune` (avoid stale remote view).
-- Scan three sources for highest existing number:
-  - Remote branches: `git ls-remote --heads origin | grep -E 'refs/heads/feature/[0-9]+-'`
-  - Local branches: `git branch | grep -E '^[* ]*feature/[0-9]+-'`
-  - Specs directories: `ls specs/ | grep -E '^[0-9]+-'`
-- `N = max(existing) + 1`, zero-padded to 3 digits (`001`, `002`, …).
-
-Release lock at end of step (close fd 9).
 
 ### 3. Create Worktree + Branch
 
 ```bash
-git worktree add ".claude/worktrees/${N}-${slug}" -b "feature/${N}-${slug}"
+# Reuse existing branch if present, else create new
+git worktree add ".claude/worktrees/${slug}" "specs/${slug}" 2>/dev/null || \
+  git worktree add ".claude/worktrees/${slug}" -b "specs/${slug}"
 ```
 
 If `.claude/worktrees/` doesn't exist, create it first. The branch is created from the current HEAD of the default branch (`main` or whatever is configured).
@@ -74,8 +82,9 @@ If `.claude/worktrees/` doesn't exist, create it first. The branch is created fr
 ### 4. Initialize Feature Directory
 
 Inside the new worktree:
+
 ```bash
-mkdir -p "specs/${N}-${slug}"
+mkdir -p "specs/${slug}"
 ```
 
 Do **not** create `spec.md` yet — that's `/speckit.specify`'s output.
@@ -83,33 +92,33 @@ Do **not** create `spec.md` yet — that's `/speckit.specify`'s output.
 ### 5. Report to User
 
 Print:
+
 ```
-✓ Feature 042-cross-ai-review started
-  Branch:   feature/042-cross-ai-review
-  Worktree: .claude/worktrees/042-cross-ai-review/
-  Spec dir: specs/042-cross-ai-review/
+✓ Feature specs/cross-ai-review started
+  Branch:   specs/cross-ai-review
+  Worktree: .claude/worktrees/cross-ai-review/
+  Spec dir: specs/cross-ai-review/
 
 Next steps:
-  cd .claude/worktrees/042-cross-ai-review
+  cd .claude/worktrees/cross-ai-review
   /speckit.specify <description>
 ```
 
 ## Coordination with `/speckit.specify`
 
-`/speckit.specify` MUST detect when it's running inside `.claude/worktrees/<N>-<slug>/` (cwd path matches that pattern) and **skip its own step 2** (branch + numbering), reusing the worktree's state.
+`/speckit.specify` MUST detect when it's running inside `.claude/worktrees/<slug>/` (cwd path matches that pattern) and **skip its own branch creation step**, reusing the worktree's state.
 
-If `/speckit.specify` is invoked WITHOUT a prior `/speckit.start` (legacy direct invocation), it falls back to its own step 2 — backward-compatible.
+If `/speckit.specify` is invoked WITHOUT a prior `/speckit.start` (legacy direct invocation), it falls back to its own branch creation — backward-compatible.
 
 ## Operating Principles
 
-### Lock-then-fetch
-Numbering races are real when two sessions start within seconds. The `flock` on `.specify/.lock` is cheap insurance. Stale lock recovery: if `.specify/.lock` exists but no `/speckit.start` is actually running, delete it manually.
-
 ### Worktree, not branch-switch
+
 Don't `git checkout` to switch — that mutates the current working directory and surprises any concurrent session. `git worktree add` keeps each feature physically isolated.
 
 ### Idempotent
-If `.claude/worktrees/<N>-<slug>/` already exists, abort with: "Feature already started. Use that worktree, or remove it via `git worktree remove`." Don't silently re-init.
+
+If `.claude/worktrees/<slug>/` already exists, abort with: "Feature already started. Use that worktree, or remove it via `git worktree remove`." Don't silently re-init.
 
 ## Context
 

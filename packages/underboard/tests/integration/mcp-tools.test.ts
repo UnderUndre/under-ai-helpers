@@ -129,8 +129,9 @@ describe("MCP Tool Contracts", () => {
   });
 
   describe("task_update", () => {
-    it("updates fields and bumps updated_at", () => {
+    it("updates fields and bumps updated_at", async () => {
       const created = taskCreate(db, { title: "Original" }, ctx);
+      await new Promise((resolve) => setTimeout(resolve, 2));
       const updated = taskUpdate(db, { id: created.id, title: "Updated" });
       expect(updated.title).toBe("Updated");
       expect(updated.updated_at).not.toBe(created.updated_at);

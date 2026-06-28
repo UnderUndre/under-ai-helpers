@@ -43,7 +43,26 @@ When Honcho is configured as the active memory backend, all REST client operatio
 - `memory_recall`: falls back to local database storage (FTS5 BM25 search). Returns partial results.
 - `memory_write`: succeeds locally, enqueues for sync (existing sync queue). Response includes `synced: false` flag.
 - The server MUST NOT crash or raise hard exceptions on Honcho timeout/outage.
-
 ## R6: Code Quality Notes (from Claude review F16)
+
 - `honcho-client.ts:19` has a junk comment: `endpoint: string; // e.g., "http://127.0.0.1:7e76f2a0"` — hex string where a port belongs. Fix to `http://127.0.0.1:8000` during implementation.
 - Default Honcho endpoint `127.0.0.1:8000` may not match the actual deployed container port. The user's Honcho instance maps host **8083**→container 8080 (internal 8000 per infra recon). The default `:8000` assumes direct container access. Users running via host port mapping MUST set `--honcho-endpoint http://127.0.0.1:8083`. Consider updating the default or documenting this clearly in quickstart.md.
+
+## Appendendum: Existing UnderboardConfig fields
+
+The current UnderboardConfig interface (as defined in packages/underboard/src/cli/config.ts) includes the following top-level fields:
+
+- port (number): HTTP port the server listens on. Default: 4280.
+- db_path (string): Filesystem path to the SQLite database. Default: ~/.underboard/data.db.
+- archive_mode (string): Archive mode (existing code uses values such as "manual").
+- archive_after_days (number): Days after which tasks are archived.
+- stalled_mode (string): Behavior for stalled tasks (e.g. "off").
+- stalled_after_hours (number): Hours to consider a task stalled.
+- retrieval (object): Retrieval tuning parameters:
+  - lexical_weight (number)
+  - semantic_weight (number)
+  - default_top_k (number)
+  - default_threshold (number)
+  - max_results (number)
+
+To that shape, feature 009 adds three nested config objects: `honcho`, `embedding`, and `llm` (see spec.md for required subfields and precedence rules). The `honcho` object centralizes Honcho endpoint/token/timeout; `embedding` contains model metadata and path; `llm` contains endpoint, API key, and model name.

@@ -1,0 +1,1 @@
+- Tests use TDD-Lite approach (write test before or immediately after implementation)

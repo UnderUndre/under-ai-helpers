@@ -49,6 +49,7 @@ export class LocalLexicalBackend implements MemoryBackend {
       created: result.created,
       provenance: result.provenance,
       sync_status: "synced",
+      synced: true,
     };
   }
 
