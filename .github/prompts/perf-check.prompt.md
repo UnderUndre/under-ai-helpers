@@ -49,7 +49,7 @@ Don't silently succeed. Offer a minimal proposal:
 
 **Simplest setup for this stack** (Node + Vitest):
 
-1. Create `packages/cli/tests/bench/<name>.bench.ts`:
+1. Create `tests/bench/<name>.bench.ts`:
    ```ts
    import { bench, describe } from "vitest";
    import { hotPath } from "../../src/...";
@@ -57,10 +57,12 @@ Don't silently succeed. Offer a minimal proposal:
      bench("baseline", () => { hotPath(fixture); });
    });
    ```
+
 2. Add script: `"bench": "vitest bench"` in `package.json`.
-3. Run: `npm run bench`.
+2. Run: `npm run bench`.
 
 Do you want me to scaffold this? (yes/no)
+
 ```
 
 ## Output format

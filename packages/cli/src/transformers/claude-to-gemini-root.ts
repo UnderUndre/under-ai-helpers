@@ -7,6 +7,10 @@
  * stack-agnostic instruction sources into a single Gemini-root document:
  *
  *   # GEMINI Instructions
+ *   ## Persona & Operating Principles
+ *   [body of .github/instructions/persona/copilot-instructions.md — the
+ *    universal, task-agnostic base persona + operating principles (incl.
+ *    critical-thinking / anti-sycophancy). Stack-agnostic, so Gemini wants it.]
  *   ## CATCHPHRASES
  *   [body of .github/instructions/persona/phrases/copilot-instructions.md]
  *   ## AI Coding Standards & Engineering Guide
@@ -34,6 +38,7 @@ import type {
   RenderedFile,
 } from "./types.js";
 
+const PERSONA_PATH = ".github/instructions/persona/copilot-instructions.md";
 const PHRASES_PATH = ".github/instructions/persona/phrases/copilot-instructions.md";
 const CODING_PATH = ".github/instructions/coding/copilot-instructions.md";
 
@@ -48,6 +53,7 @@ interface Section {
  * tone first, rules second.
  */
 const SECTIONS: readonly Section[] = [
+  { title: "## Persona & Operating Principles", sourcePath: PERSONA_PATH },
   { title: "## CATCHPHRASES", sourcePath: PHRASES_PATH },
   { title: "## AI Coding Standards & Engineering Guide", sourcePath: CODING_PATH },
 ];

@@ -26,6 +26,7 @@ describe("claude-to-gemini-root compose", () => {
     const r = Array.isArray(result) ? result[0]! : result!;
     expect(r.targetPath).toBe("GEMINI.md");
     expect(r.content).toContain("# GEMINI Instructions");
+    expect(r.content).not.toContain("## Persona & Operating Principles");
     expect(r.content).not.toContain("## CATCHPHRASES");
     expect(r.content).not.toContain("## AI Coding Standards");
     expect(r.fromSource).toBe("CLAUDE.md");
@@ -46,6 +47,30 @@ describe("claude-to-gemini-root compose", () => {
     // Body's own H1 is stripped — we don't want a stray `# AI_CATCHPHRASES.prompt.md`
     // floating under our `## CATCHPHRASES` header.
     expect(r.content).not.toContain("# AI_CATCHPHRASES.prompt.md");
+  });
+
+  it("composes Persona section first when persona base file is present", () => {
+    const persona = parseSourceFile(
+      ".github/instructions/persona/copilot-instructions.md",
+      "# AI_PERSONA_prompt.md\n\n## 2. Persona\n\nPERSONA_BODY\n",
+    );
+    const phrases = parseSourceFile(
+      ".github/instructions/persona/phrases/copilot-instructions.md",
+      "# phrases\n\nPHRASES_BODY\n",
+    );
+    const ctx = makeCtx([makeClaude(), persona, phrases]);
+    const result = claudeToGeminiRoot(makeClaude(), ctx);
+
+    const r = Array.isArray(result) ? result[0]! : result!;
+    expect(r.content).toContain("## Persona & Operating Principles");
+    expect(r.content).toContain("PERSONA_BODY");
+    // Base persona's own H1 is stripped — no stray `# AI_PERSONA_prompt.md`.
+    expect(r.content).not.toContain("# AI_PERSONA_prompt.md");
+    // Persona foundation comes before catchphrases flavor.
+    const personaIdx = r.content.indexOf("PERSONA_BODY");
+    const phrasesIdx = r.content.indexOf("PHRASES_BODY");
+    expect(personaIdx).toBeGreaterThan(-1);
+    expect(personaIdx).toBeLessThan(phrasesIdx);
   });
 
   it("composes AI Coding Standards section when coding file is present", () => {

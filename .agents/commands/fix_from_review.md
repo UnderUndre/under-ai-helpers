@@ -1,4 +1,4 @@
-# пофикси то, с чем согласен по ревью в файлах ai\.gemini\review.md и ai\.github\review.md
+# пофикси то, с чем согласен по ревью в файлах specs/[current_spec_number]/reviews/
 
 ultrathink
 

@@ -92,6 +92,21 @@ const data: any = ...
 const data: UserData = ...
 ```
 
+## AI Engineering Coach Rules (code-review relevant)
+
+Rules adapted from [microsoft/AI-Engineering-Coach](https://github.com/microsoft/AI-Engineering-Coach). Flag these during review:
+
+- **Copy-paste blindness**: Large AI-generated blocks with no follow-up refinement → ask author to explain key sections
+- **Speed-accept**: Next message sent <15s after 20+ AI LOC → code was not reviewed
+- **Vibe-coding**: High AI LOC from minimal prompts, no spec → demand spec or plan before approving
+- **YOLO mode**: >90% tool auto-approve rate → unsupervised agent runs; verify intent matches output
+- **Auto-approved terminal**: Destructive commands ran without review → check for `rm`, `DROP`, `--force`
+- **Session drift**: Mixed task types in one PR → split into focused PRs
+- **No spec-driven dev**: No spec/plan artifact before implementation → request spec retroactively
+- **Unstructured task starts**: Vague initial prompts → flag if PR description is equally vague
+- **Verbose output**: AI generated >5K tokens from short prompt → check for bloat/boilerplate
+- **No file context**: AI wrote code without referencing existing files → verify compatibility
+
 ## Review Comments Guide
 
 ```

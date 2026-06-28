@@ -40,10 +40,11 @@ Abort if `FEATURE_DIR/tasks.md` doesn't exist (nothing to retrospect on).
 ### 2. Load Evidence
 
 Read in this order:
+
 - `FEATURE_DIR/spec.md`, `plan.md`, `tasks.md` (the predictions)
 - `FEATURE_DIR/reviews/*.md` (gate evidence — what reviewers flagged before implement)
 - `FEATURE_DIR/retrospective.md` (if exists — append, don't overwrite)
-- `git log --since=<tasks/<slug>/v1 tag date> -- specs/<slug>/ ":(exclude)specs/<slug>/retrospective.md"` (commits during this feature's lifecycle)
+- `git log tasks/<slug>/v1..HEAD -- specs/<slug>/ ":(exclude)specs/<slug>/retrospective.md"` (commits during this feature's lifecycle)
 - `git diff <tasks/<slug>/v1>..HEAD --stat -- "specs/<slug>/"` (what tasks.md became vs what it started as)
 - `.specify/memory/constitution.md`
 - `.specify/templates/spec-template.md`
@@ -53,6 +54,7 @@ If `tasks/<slug>/v1` tag missing, fall back to first commit touching `tasks.md`.
 ### 3. Classify Tasks (from tasks.md status markers)
 
 Parse status markers:
+
 | Marker | Meaning |
 |--------|---------|
 | `[X]` | Completed |
@@ -64,19 +66,24 @@ Parse status markers:
 ### 4. Build Retrospective Sections
 
 #### Wins
+
 - Tasks marked `[X]` that completed without scope drift (compare against original task description — same files, same agents)
 - Predictions in spec.md that turned out correct (success criteria that were measurable AND met)
 
 #### Misses
+
 - Tasks marked `[!]` — root cause for each (cite reviews/*.md or commit messages)
 - Tasks marked `[~]` — what failure cascaded
 - Scope drift: tasks `[X]` but completed via different files / agents than predicted (sign that the plan was off)
 - Surprises: changes during implement that weren't in any review finding
 
 #### Constitution Candidates
+
 For each pattern observed ≥2 times across this feature:
+
 - "Pattern X happened repeatedly" → "candidate for constitution Principle"
 - Output proposed text in markdown block, citing evidence. Format:
+
   ```
   ### Proposed Principle: <name>
   > "<one-sentence MUST/SHOULD statement>"
@@ -86,12 +93,16 @@ For each pattern observed ≥2 times across this feature:
   ```
 
 #### Template Candidates
+
 For sections that were missing from spec.md but should always be there:
+
 - "spec.md never addressed X, but ALL reviewers flagged it" → "spec-template.md should require an X section"
 - Output proposed template diff (unified format).
 
 #### Reviewer Calibration
+
 For each review file in `FEATURE_DIR/reviews/*.md`:
+
 - Did the verdict (PASS / HIGH / CRITICAL) correlate with implementation outcome?
 - Findings the reviewer flagged → did they actually bite during implement? (true positive)
 - Findings the reviewer missed → discovered during implement? (false negative)
@@ -148,6 +159,7 @@ Format:
 ### 6. Report to User
 
 Print:
+
 - Path of retrospective file
 - 1-line summary of outcomes (e.g., "8 [X], 1 [!], 2 [~] — 73% completion")
 - Number of constitution candidates proposed
@@ -157,12 +169,15 @@ Print:
 ## Operating Principles
 
 ### Evidence-based
+
 Every claim cites a file:line, commit SHA, or review finding. No vibes-based retrospective.
 
 ### Constructive
+
 Misses are framed as "spec/plan should have asked X", not "the implementer was bad". The artifact is wrong, not the human.
 
 ### Conservative on promotions
+
 Don't propose a constitution principle from a single anecdote. Threshold: pattern observed ≥2 times in this feature, or once with high blast radius.
 
 """
