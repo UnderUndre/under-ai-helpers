@@ -10,6 +10,15 @@ import { taskListAssigned } from "#tools/tasks/list-assigned.js";
 import { taskArchive } from "#tools/tasks/archive.js";
 import { detectProject } from "#project/detector.js";
 import { upsertProject } from "#storage/project-store.js";
+import { handler as profileGetHandler, schema as profileGetSchema } from "../tools/knowledge/profile-get.js";
+import { handler as profileSetHandler, schema as profileSetSchema } from "../tools/knowledge/profile-set.js";
+import { handler as profileConfigHandler, schema as profileConfigSchema } from "../tools/knowledge/profile-config.js";
+import { handler as profileExportHandler, schema as profileExportSchema } from "../tools/knowledge/profile-export.js";
+import { handler as profileForgetHandler, schema as profileForgetSchema } from "../tools/knowledge/profile-forget.js";
+import { handler as profileSyncHandler, schema as profileSyncSchema } from "../tools/knowledge/profile-sync.js";
+import { handler as profileSignalsHandler, schema as profileSignalsSchema } from "../tools/knowledge/profile-signals.js";
+import { handler as profileRecordSignalHandler, schema as profileRecordSignalSchema } from "../tools/knowledge/profile-record-signal.js";
+import { handler as profileQuizHandler, schema as profileQuizSchema } from "../tools/knowledge/profile-quiz.js";
 
 export interface ToolContext {
   project_id: string;
@@ -139,6 +148,53 @@ export function createMcpServer(db: Database.Database, config: UnderboardConfig)
   }, async (params: any) => {
     const result = taskArchive(db, params);
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
+  });
+
+  // Knowledge profile tools
+  server.tool("knowledge_profile_get", "Get knowledge profile for current project (optional domain)", profileGetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileGetHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_set", "Set knowledge profile level for project (optional domain)", profileSetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSetHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_config", "Configure knowledge profile (display_scale, sync, retention, domains, accept/reject proposals)", profileConfigSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileConfigHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_export", "Export knowledge profile (anonymized)", profileExportSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileExportHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_forget", "Forget knowledge profile (destructive cascade delete)", profileForgetSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileForgetHandler(db, params, ctx);
+  });
+
+  // Signals tools
+  server.tool("knowledge_profile_signals", "List recent signals and summary", profileSignalsSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSignalsHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_record_signal", "Record an observed signal for inference", profileRecordSignalSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileRecordSignalHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_quiz", "Run a short quiz to declare proficiency (start/answer/status)", profileQuizSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileQuizHandler(db, params, ctx);
+  });
+
+  server.tool("knowledge_profile_sync", "Synchronize profile with encrypted transport (push, pull, resolve conflicts)", profileSyncSchema.shape, async (params: any, extra: any) => {
+    const ctx = extractContext(extra);
+    return profileSyncHandler(db, params, ctx);
   });
 
   return server;

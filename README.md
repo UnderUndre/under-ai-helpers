@@ -116,6 +116,7 @@ A standalone MCP tool server that gives your agents shared state and long-term m
 - **Task Board**: Kanban-style task management for agents. Prevents duplicate work in multi-agent sessions.
 - **Semantic Memory**: Powered by Honcho v3 (semantic primary) with local FTS5 fallback (lexical tier).
 - **Dialog Capture**: Phase 2 of the ingestion pipeline. Automatically captures, normalizes, and redacts conversations for long-term recall.
+- **User Knowledge Profile & Adaptation**: Continuous learning of user expertise, dynamic explanation depth gating, and secure AES-256-GCM profile synchronization across client machines.
 - **Dashboard**: Local web UI to visualize active tasks and the memory feed.
 
 See [packages/underboard/README.md](packages/underboard/README.md) for setup.

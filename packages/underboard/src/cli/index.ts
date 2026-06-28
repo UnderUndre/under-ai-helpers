@@ -156,5 +156,64 @@ program
     await deleteTask(id);
   });
 
+const profileCmd = program
+  .command("profile")
+  .description("Profile management commands");
+
+profileCmd
+  .command("status")
+  .description("Show profile status for a project")
+  .argument("<projectId>", "Project ID")
+  .action(async (projectId) => {
+    const { showProfileStatus } = await import("#cli/profile.js");
+    await showProfileStatus(projectId);
+  });
+
+profileCmd
+  .command("export")
+  .description("Export profile for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("[path]", "Output file path", "profile-export.json")
+  .action(async (projectId, path) => {
+    const { runProfileExport } = await import("#cli/profile.js");
+    await runProfileExport(projectId, path);
+  });
+
+profileCmd
+  .command("forget")
+  .description("Forget profile data for a project")
+  .argument("<projectId>", "Project ID")
+  .option("--confirm", "Confirm destructive operation")
+  .action(async (projectId, opts) => {
+    if (!opts.confirm) {
+      console.error("Use --confirm to confirm profile forget");
+      process.exit(1);
+    }
+    const { runProfileForget } = await import("#cli/profile.js");
+    await runProfileForget(projectId, true);
+  });
+
+profileCmd
+  .command("push")
+  .description("Push profile encrypted payload for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("<passphrase>", "Passphrase for AES encryption")
+  .argument("<path>", "Output file path")
+  .action(async (projectId, passphrase, path) => {
+    const { runProfilePush } = await import("#cli/profile.js");
+    await runProfilePush(projectId, passphrase, path);
+  });
+
+profileCmd
+  .command("pull")
+  .description("Pull and merge profile decrypted payload for a project")
+  .argument("<projectId>", "Project ID")
+  .argument("<passphrase>", "Passphrase for AES decryption")
+  .argument("<path>", "Input file path")
+  .action(async (projectId, passphrase, path) => {
+    const { runProfilePull } = await import("#cli/profile.js");
+    await runProfilePull(projectId, passphrase, path);
+  });
+
 program.parse();
 

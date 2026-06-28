@@ -6,6 +6,7 @@ A local-first Model Context Protocol (MCP) tool server that provides AI agents w
 
 - **Task Management**: A Kanban-style board for agents to create, update, and track tasks. Prevents duplicate work when switching between different AI tools or agents.
 - **Semantic Memory**: Persistent memory for agents to store facts, decisions, and documentation.
+- **User-level Adaptation**: Tracks and infers developer skill level (beginner, intermediate, expert) across project domains using an inferred or hybrid mode, optimizing explanations and suggestions accordingly.
 - **Multi-Backend Memory**:
   - **Honcho v3 (Primary)**: High-quality semantic search using the Honcho REST API.
   - **Local Lexical (Fallback)**: Built-in SQLite FTS5 (BM25) search for offline work or when Honcho is unavailable.
@@ -90,9 +91,16 @@ The `underboard` binary (available via `npm link` or direct path) provides manag
 ```bash
 underboard start   # Start the MCP server + Dashboard
 underboard stop    # Stop the running server
-underboard status  # Check server health and backend connectivity
+underboard status  # Check server health and connectivity
 underboard export  # Export the memory database
 underboard import  # Import entries into memory
+
+# Profile management subcommands
+underboard profile status <project_id>               # Show profile levels and modes
+underboard profile export <project_id> [path]        # Export anonymized profile data
+underboard profile forget <project_id> --confirm     # Destructively delete a profile
+underboard profile push <project_id> <secret> <path> # Push encrypted profile to path
+underboard profile pull <project_id> <secret> <path> # Pull and decrypt profile from path
 ```
 
 ## Architecture

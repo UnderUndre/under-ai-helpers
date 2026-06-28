@@ -143,14 +143,15 @@ export default {
     // this target. Core persona (without phrases) is in `.github/instructions/
     // persona/copilot-instructions.md` and ships via copilot/gemini targets
     // unconditionally. See Principle V.
-  "persona-phrases": {
-    pipelines: [
-      {
-        transformer: "identity",
-        match: ".github/instructions/persona/phrases/**/*",
-        output: "{{relativePath}}",
-      },
-    ],
+    "persona-phrases": {
+      pipelines: [
+        {
+          transformer: "identity",
+          match: ".github/instructions/persona/phrases/**/*",
+          output: "{{relativePath}}",
+        },
+      ],
+    },
   },
 
   packs: {
