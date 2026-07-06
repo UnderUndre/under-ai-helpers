@@ -36,10 +36,9 @@
 
 - Marker syntax: `<!-- HELPERS:REF "relative/path/to/file.md" -->` (path relative to repo root).
 - Resolver reads target file, extracts body content (strips AUTO-GENERATED header if present), replaces marker inline.
-- Single level only. If resolved file contains another `<!-- HELPERS:REF -->`, resolver throws (bounded recursion per FR-013 edge case).
-- **Cycle detection**: resolver tracks absolute file paths in `context.visited: Set<string>`. If a path is revisited (A → B → A loop, or A → A self-reference), resolver throws instantly instead of stack-overflowing. Aligned with plan.md §Research Summary and antigravity F3 fix.
+- **Recursive resolution**: if the resolved body itself contains `<!-- HELPERS:REF -->` markers, resolver recurses to resolve them (bounded by `MAX_RESOLVE_DEPTH`). This is required so Foundations can compose shared sub-prose without manual duplication.
+- **Cycle detection with backtracking**: resolver tracks absolute file paths in `context.visited: Set<string>`. Before resolving a path, it checks if the path is already on the **current** resolution chain (prevents A → B → A loops); after resolving, it **deletes the path** (`context.visited.delete(absolutePath)`) so that sibling references to the same file (A includes B twice, or A and B both include C) do NOT trigger a false-positive cycle error. Aligned with plan.md §Research Summary and antigravity F3 fix; backtracking added per gemini-code-assist review.
 - Missing target file → resolver throws with clear error message (safe-fail per Edge Cases).
-- Result is cached per resolve call (same path appears multiple times in one file? improbable for CLAUDE.md but supported statelessly).
 
 ### Implementation
 
@@ -47,16 +46,15 @@ New file `packages/cli/src/transformers/reference-resolver.ts`:
 
 ```typescript
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, relative } from 'node:path';
-import { TransformerFn, RenderedFile, ParsedFile } from './types';
+import { resolve } from 'node:path';
 
 const REF_MARKER_RE = /<!-- HELPERS:REF "([^"]+)" -->/g;
-const MAX_RESOLVE_DEPTH = 1;
+const MAX_RESOLVE_DEPTH = 4;
 
 export interface ResolveContext {
   repoRoot: string;          // absolute path to repo root
   sourcePath: string;        // path of file containing the marker
-  visited: Set<string>;      // cycle guard — absolute paths already resolved
+  visited: Set<string>;      // cycle guard — absolute paths on current resolution chain (with backtracking)
 }
 
 export function resolveReferences(
@@ -67,16 +65,18 @@ export function resolveReferences(
   if (depth >= MAX_RESOLVE_DEPTH) {
     throw new Error(
       `Reference resolution depth exceeded (max ${MAX_RESOLVE_DEPTH}) in ${context.sourcePath}. ` +
-      `Recursive/nested references are not supported.`
+      `Recursive/nested references are too deep.`
     );
   }
 
   return content.replace(REF_MARKER_RE, (_match, targetPath: string) => {
     const absolutePath = resolve(context.repoRoot, targetPath);
+
+    // Cycle detection (current chain only, via backtracking)
     if (context.visited.has(absolutePath)) {
       throw new Error(
         `Reference cycle detected: "${targetPath}" (resolved to ${absolutePath}) ` +
-        `was already visited. Chain: ${[...context.visited, absolutePath].join(' → ')}.`
+        `is already on the current resolution chain. Chain: ${[...context.visited, absolutePath].join(' → ')}.`
       );
     }
     if (!existsSync(absolutePath)) {
@@ -85,11 +85,23 @@ export function resolveReferences(
         `Referenced from marker in ${context.sourcePath}.`
       );
     }
+
+    // Mark + recurse + backtrack (enables sibling references to the same file)
     context.visited.add(absolutePath);
-    const refContent = readFileSync(absolutePath, 'utf-8');
-    // Strip AUTO-GENERATED header if present (between first --- delimiters)
-    const body = refContent.replace(/^---[\s\S]*?---\n/, '');
-    return body;
+    try {
+      const refContent = readFileSync(absolutePath, 'utf-8');
+      // Strip AUTO-GENERATED header if present (between first --- delimiters)
+      const body = refContent.replace(/^---[\s\S]*?---\n/, '');
+      // Recursively resolve any nested REF markers in the resolved body
+      const nestedContext: ResolveContext = {
+        ...context,
+        sourcePath: absolutePath,
+      };
+      return resolveReferences(body, nestedContext, depth + 1);
+    } finally {
+      // Backtrack: allow sibling references to the same file
+      context.visited.delete(absolutePath);
+    }
   });
 }
 ```

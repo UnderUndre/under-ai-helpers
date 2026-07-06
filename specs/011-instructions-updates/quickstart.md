@@ -86,7 +86,7 @@ The PVE module ships as an opt-in transpile target. It's NEVER in the default ou
 **"Reference target not found" error on sync**
 → The `<!-- HELPERS:REF "..." -->` path points to a non-existent file. Verify the relative path from repo root.
 
-**"Circular reference detected" build error error on sync**
+**"Circular reference detected" build error on sync**
 → A nested reference loops back into a file that is already in the resolution lifecycle. Flatten the reference structure (references should only be 1 level deep).
 
 **"Command-plane reference forbidden" build error on sync**

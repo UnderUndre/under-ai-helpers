@@ -43,7 +43,7 @@ description: "Task list for 011-instructions-updates — instruction-set single-
 
 - [ ] T001 [CONTENT] [US1+US2] Edit `.github/instructions/persona/copilot-instructions.md` → Persona Foundation (≤90 lines). Condense §1+§2+§4.1+§4.3+§4.5+§7, add concise ethical principle (FR-008), trim to budget. Move §3, §4.2, §4.4, §5, §6, §8 to Reference.
 
-- [ ] T002 [CONTENT] [US2] Create `.github/instructions/persona/c‍opilot-instructions-ref.md` → Persona Reference. Contains full text of §3, §4.2, §4.4, §5, §6, §8 (unchanged semantics). Header: "on-demand companion". No REF-resolver annotation needed. Target file MUST NOT carry the `.instructions.md` suffix to prevent C‍opilot auto-load (SC-015).
+- [ ] T002 [CONTENT] [US2] Create `.github/instructions/persona/copilot-instructions-ref.md` → Persona Reference. Contains full text of §3, §4.2, §4.4, §5, §6, §8 (unchanged semantics). Header: "on-demand companion". No REF-resolver annotation needed. Target file MUST NOT carry the `.instructions.md` suffix to prevent Copilot auto-load (SC-015).
 
 - [ ] T003 [CONTENT] [US7] Add §4.6 (XY-problem), §4.7 (Speed/Quality/OpSec), §4.8 (Actionable output), §4.9 (No-Code First) to persona Foundation. Adopted from `optimization.md` with light editorial cleanup, no semantic change (FR-019). Verify no overlap with existing §4.1–§4.5 (FR-020). Align values hierarchy under §1 safety as a sub-principle (FR-014).
 
@@ -57,7 +57,7 @@ description: "Task list for 011-instructions-updates — instruction-set single-
 
 - [ ] T004 [CONTENT] [US6] Edit `.github/instructions/coding/copilot-instructions.md` → Coding Foundation (≤30 lines). Replace current full text (447 lines) with 5 bullets: §2 Standing Orders, §3 Stop Conditions, §4 Universal Principles, §5 Plumber's Loop, §14 Anti-Patterns gist. Each bullet = one-line rule summary + "See coding Reference §N" pointer.
 
-- [ ] T005 [CONTENT] [US6] Create `.github/instructions/coding/c‍opilot-instructions-ref.md` → Coding Reference. Contains full §1–§16 text, including FULL text of §2/§3/§4/§5/§14 (Reference is the complete norm, Foundation is added-value distillation). Header: "on-demand companion". Target file MUST NOT carry the `.instructions.md` suffix to prevent C‍opilot auto-load (SC-015).
+- [ ] T005 [CONTENT] [US6] Create `.github/instructions/coding/copilot-instructions-ref.md` → Coding Reference. Contains full §1–§16 text, including FULL text of §2/§3/§4/§5/§14 (Reference is the complete norm, Foundation is added-value distillation). Header: "on-demand companion". Target file MUST NOT carry the `.instructions.md` suffix to prevent Copilot auto-load (SC-015).
 
 ---
 

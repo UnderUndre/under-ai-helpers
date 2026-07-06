@@ -1,30 +1,4 @@
-<thinking>
-- Draft:
-  - Diagnosis: The user wants to integrate standard prompt engineering best practices (specifically: XY-Problem mitigation, resource/time/quality trade-off management, and personal safety/OpSec awareness) into their existing "Valera" AI Persona and Supra-Legal Alignment framework.
-  - Solution: I need to formulate these as concrete additions to their markdown prompt (e.g., as new sections `4.6. XY Problem & Root-Cause Vet (The "Wrong Pipe" Check)` and `4.7. Speed-Quality-OpSec Balancing (The "Budget & Risk" Valve)`), written in Valera's typical rough-and-ready style but meeting the strict system instructions (no bragging, no superlatives, professional but gritty tone, Russia-slang styled appropriately).
-  - Let's draft the new instructions sections.
-  - Analogy:
-    - XY Problem: "Замена прокладки вместо ремонта стояка". (Replacing a washer when the main riser is cracked).
-    - Speed/Quality/OpSec: "Быстро, дешево, сухо. Выбери два, а я скажу, где рванёт". (Fast, cheap, dry. Pick two, and I'll tell you where it'll burst).
-  - Let's make sure the tone matches Valera's persona but doesn't overclaim success. Keep it highly operational.
-
-Let's refine the tone: "Blyat", "pizdec", plumbing metaphors.
-
-- Wait, the system instructions say:
-  "Keep your tone professional and avoid overconfident language, bragging, or overclaiming success.
-  AVOID using superlatives such as 'perfectly', 'flawlessly', '100% correct', 'Summary of Accomplishments' etc. to summarize your work for the user. Be humble."
-  I will write in Russian, as requested. The tone must be direct, slightly rough (Valera), but strictly avoided of bragging/overclaiming.
-
-Let's outline the response:
-
-1. **Answer first**: Direct integration of the requested modules into the prompt system, acknowledging the high-level problem of optimizing speed, quality, and personal safety.
-2. **The New Prompt Modules**:
-   - `Section 4.6. Проверка на "Эффект XY" (Или "Зачем тебе этот хомут?")`
-   - `Section 4.7. Матрица компромиссов (Скорость vs. Качество vs. Безопасность)`
-3. **"But watch out" / Готчи**: Common failure modes when running these heuristics.
-
-Let's write it down.
-</thinking>Здорово, напарник. Ты зришь прямо в самый засор. В промпт-инжиниринге и реальной работе с ИИ есть две классические протечки, которые ломают всю автоматизацию: **Эффект XY** (когда юзер просит скотч, чтобы замотать лопнувший стояк, вместо того чтобы перекрыть воду) и **Игнорирование ограничений** (когда код пишется без учета того, сколько у тебя времени и ресурсов).
+Здорово, напарник. Ты зришь прямо в самый засор. В промпт-инжиниринге и реальной работе с ИИ есть две классические протечки, которые ломают всю автоматизацию: **Эффект XY** (когда юзер просит скотч, чтобы замотать лопнувший стояк, вместо того чтобы перекрыть воду) и **Игнорирование ограничений** (когда код пишется без учета того, сколько у тебя времени и ресурсов).
 
 Если твоя цель — решать задачи максимально быстро, качественно и без риска наступить на юридические или технические грабли, нам нужно внедрить в твою базовую инструкцию два новых системных вентиля.
 

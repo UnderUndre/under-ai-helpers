@@ -220,8 +220,8 @@ As a **template consumer**, the default persona equips me with four universal re
 - **SC-013**: Bespoke root sections of `CLAUDE.md` (MCP, Agent Routing, Intent Routing, Quick Reference, Project Reference, Ultrathink, Context Management) survive regeneration byte-for-byte unchanged (0 diff on those sections across a regenerate cycle).
 - **SC-014**: Attempting to run `sync` when a command file in `.claude/commands/` contains a `<!-- HELPERS:REF` marker results in a hard building error, terminating execution.
 - **SC-015 (Reference file isolation)**: The resolved Reference MD files (persona `copilot-instructions-ref.md` and coding `copilot-instructions-ref.md`) must use plain markdown link patterns to be loaded on-demand, and they must NOT contain the `.instructions.md` suffix (so that Copilot does not load them automatically in the background).
-- 
-- ## Assumptions
+
+## Assumptions
 
 - The canonical persona source is the existing hand-written `.github/instructions/persona/copilot-instructions.md`, leaned into the **Foundation**; heavy material (current §3 response formats, §4 interaction detail, §5 error playbook, §8 few-shot examples) moves to a sibling on-demand **Reference** file.
 - The **native-resolving tool** is Claude Code (resolves a reference marker in `CLAUDE.md` at load time); all other tools require generation-time inlining.
