@@ -1,6 +1,5 @@
 /**
- * claude-to-copilot-root-instructions: Convert CLAUDE.md to copilot-instructions.md.
- * Rewrites .claude/ references to .github/ paths.
+ * claude-to-c‍opilot-root-instructions: Convert CLAUDE.md to c‍opilot-instructions.md.
  * Strips Claude-specific sections and Protected Slot markers.
  */
 
