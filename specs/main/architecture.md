@@ -23,7 +23,7 @@ Authoritative content. Edits start here.
 | `.claude/commands/` | 75+ Claude Code slash commands (`/speckit.*`, `/bump`, `/commit`, `/brainstorm`, ...). |
 | `.claude/agents/` | 27+ specialist agent definitions (`backend-specialist`, `debugger`, `orchestrator`, ...). YAML frontmatter + markdown body. |
 | `.claude/skills/` | 44+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. Includes `knowledge-adaptation/` — agent-side adaptation skill for user-level knowledge level consumption. |
-| `CLAUDE.md` | Root persona/operating instructions for Claude Code. Cross-links to coding standards, persona, and this spec. |
+| `CLAUDE.md` | Root persona/operating instructions. Composed from persona Foundation + coding Foundation via `<!-- HELPERS:REF -->` markers + hand-maintained bespoke sections (MCP, Agent Routing, Intent Routing, Quick Ref, Project Ref, Ultrathink, Context Mgmt). The two Foundations are single-source for all four tools; bespoke sections are edited directly in CLAUDE.md. |
 | `helpers.config.ts` | Authoritative pipeline configuration: `sources` glob + `targets` map (transformer + match + output) + `packs` section (pack membership mapping + marketplace metadata, feature 006). |
 | `.claude/hooks/*.mjs` | Harness-enforced guard hooks (destructive-command ask-gate, secret-read deny, post-edit lint feedback) — Node, cross-platform (feature 006). Plus `dialog-capture.mjs` — Stop-hook wrapper that spawns the dialog-capture pipeline (feature 007). |
 | `presets/` | Shippable permission preset (`permissions.json`) + statusline script (`statusline.mjs`), applied to consumer settings via `helpers presets apply` (feature 006). Plus `presets/redaction/` — redaction catalogs (`catalog_cloud.yml`, `catalog_pii.yml`, `allowlist.yml`) consumed by the dialog normalizer (feature 007). |
@@ -38,13 +38,13 @@ Produced by `clai-helpers regen` (upstream) or `clai-helpers sync` (consumer). *
 |--------|------|---------------|-------------|
 | Copilot | `.github/prompts/*.prompt.md` | `.claude/commands/*.md` | `claude-to-copilot-prompt` |
 | Copilot | `.github/instructions/<agent>.instructions.md` | `.claude/agents/*.md` | `claude-to-copilot-instructions` |
-| Copilot | `.github/copilot-instructions.md` | `CLAUDE.md` | `claude-to-copilot-root-instructions` |
+| Copilot | `.github/copilot-instructions.md` | `CLAUDE.md` (with REF resolution → inlined Foundations) | `claude-to-copilot-root-instructions` |
 | Gemini | `.gemini/commands/*.toml` | `.claude/commands/*.md` | `claude-to-gemini-command` |
 | Gemini | `.gemini/agents/*.md` | `.claude/agents/*.md` | `claude-to-gemini-agent` |
-| Gemini | `GEMINI.md` (root) | `CLAUDE.md` (+ phrases + coding) | `claude-to-gemini-root` |
+| Gemini | `GEMINI.md` (root) | `CLAUDE.md` (+ Foundation-only REF resolution; Reference files excluded) | `claude-to-gemini-root` |
 | Antigravity | `.agent/agents/**`, `.agent/skills/**`, `.agent/workflows/**` | `.claude/{agents,skills,commands}/**` | `identity` (mirror) |
 | Codex Desktop | `.agents/commands/*.md` | `.claude/commands/*.md` | `identity` |
-| Codex Desktop / Antigravity | `AGENTS.md` (root) | `CLAUDE.md` | `identity` |
+| Codex Desktop / Antigravity | `AGENTS.md` (root) | `CLAUDE.md` (with REF resolution → inlined Foundations) | `claude-to-codex-root-instructions` |
 | Speckit (mirror) | `.specify/**` | `.specify/**` | `identity` |
 | Persona phrases (opt-in) | `.github/instructions/persona/phrases/**` | self | `identity` |
 | Plugin marketplace | `.claude-plugin/marketplace.json` | `helpers.config.ts#packs` | pack assembler (feature 006) |
@@ -54,17 +54,22 @@ Pipeline registry: `packages/cli/src/transformers/registry.ts`. Adding a new AI-
 
 ## 4. Hand-Written (NOT auto-generated)
 
-The exception. Files Copilot consumes directly, never sourced from `.claude/`.
+The exception. Files Copilot consumes directly, never sourced from `.claude/`. Some are split into Foundation (always-loaded, canonical) + Reference (on-demand, heavy material).
 
 | Path | Purpose |
 |------|---------|
-| `.github/instructions/coding/copilot-instructions.md` | Universal Coding Standards (v2.0.0, stack-agnostic). Standing Orders, Stop Conditions, Plumber's Loop, anti-patterns. |
+| `.github/instructions/coding/copilot-instructions.md` | **Coding Foundation** (≤30 lines, 5 bullets). Always-loaded distillation of Universal Coding Standards (v2.0.0). Standing Orders, Stop Conditions, Plumber's Loop, anti-patterns gist. |
+| `.github/instructions/coding/copilot-instructions-ref.md` | **Coding Reference** (on-demand). Full §1–§16 normative text, examples, anti-pattern detail. Referenced from Foundation, never always-loaded. |
 | `.github/instructions/coding/git/copilot-instructions.md` | Commit message rules. Enforced by `commitlint.config.js` + `.cz-config.cjs`. |
-| `.github/instructions/persona/copilot-instructions.md` | Valera persona base. |
+| `.github/instructions/persona/copilot-instructions.md` | **Persona Foundation** (≤90 lines/≤8 KB). Valera identity + interaction protocols (§4.1–§4.9) + ethical principle + boundaries. |
+| `.github/instructions/persona/copilot-instructions-ref.md` | **Persona Reference** (on-demand). Full §3 response formats, §5 error playbook, §6 socket, §8 examples, §4.2+§4.4 moved to meet Foundation budget. |
 | `.github/instructions/persona/phrases/copilot-instructions.md` | Valera catchphrases (opt-in via `persona-phrases` target). |
+| `.github/instructions/pve/copilot-instructions.md` | **PVE module** (opt-in via `pve` target). Full proportionality/verification framework; NOT in default output. |
 | `.github/instructions/project/copilot-instructions.md` | **Redirect to this file + [`requirements.md`](requirements.md).** |
 | `README.md` / `README.ru.md` | User-facing onboarding. |
 | `CONTRIBUTING.md` | Contributor guidelines. |
+
+**Key rule**: persona/coding Foundations are the single source of truth. `CLAUDE.md` composes them via `<!-- HELPERS:REF -->` markers (FR-015), never duplicates their prose. Reference files are on-demand only — excluded from always-loaded targets and from Gemini by design.
 
 ## 5. CLI Package Layout
 
@@ -117,6 +122,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`.
 | `.specify/templates/` | Spec / plan / tasks / checklist templates. |
 | `specs/<feature-slug>/` | Per-feature artifacts: `spec.md`, `plan.md`, `tasks.md`, `contracts/`, `data-model.md`, `quickstart.md`, `research.md`, `checklists/`, `reviews/<provider>.md`. Active: `specs/006-ecosystem-parity/` — marketplace packaging, guard hooks, permission presets, skill evals, native SKILL.md delivery, statusline, dialog archive. `specs/007-dialog-capture/` — Phase 2 of 006/US7: CC transcript capture, normalization, INDEX auto-population, Honcho Session ingestion with quarantine window. `specs/008-memory-backend-honcho/` — backend seam + Honcho integration. `specs/010-user-level-adaptation/` — user-level knowledge adaptation subsystem: privacy-preserving per-project profiles, switchable assessment modes, per-sub-domain level scoping, multi-machine sync via encrypted file transport, agent-side skill for explanation depth adaptation. `specs/023-language-guard-validator-leftovers/` — LanguageGuardValidator API layer: config CRUD, enabled toggle, configVersion optimistic locking, audit log API. |
 | `specs/main/` | **This directory.** Project-wide architecture + requirements (canonical, not feature-scoped). |
+| `specs/011-instructions-updates/` | Instruction-set single-source architecture — persona/coding Foundation/Reference split, CLAUDE.md composition via REF markers, optimization modules adoption, PVE module opt-in. |
 
 Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage.{sh,ps1}`, idempotent via `--points-at HEAD`. `/speckit.diff` and `/speckit.retrospective` read these tags.
 
@@ -127,23 +133,30 @@ Stage tags (Principle VII): `<stage>/<slug>/v<N>` — created by `snapshot-stage
 ## 9. Data Flow
 
 ```
-                     ┌─────────────────┐
-        edit         │   .claude/**    │           edit
-        ─────────►   │   CLAUDE.md     │   ◄─────────
-                     │   helpers.config│
-                     └────────┬────────┘
+                     ┌──────────────────────────────┐
+        edit         │   .claude/**                  │
+        ─────────►   │   .github/instructions/        │
+                     │   ├── persona/  (Foundation)   │
+                     │   ├── coding/   (Foundation)   │
+                     │   ├── *-ref.md  (Reference)    │
+                     │   └── pve/      (opt-in)       │
+                     │   CLAUDE.md (REF markers)      │
+                     │   helpers.config               │
+                     └────────┬───────────────────────┘
                               │
-                  helpers regen (upstream)  /  helpers sync (consumer)
+                  helpers regen / helpers sync
                               │
-        ┌─────────────────────┼─────────────────────────┐
-        ▼                     ▼                         ▼
-  ┌──────────┐        ┌──────────────┐          ┌──────────────┐
-  │ .github/ │        │   .gemini/   │          │   .agent/    │
-  │ prompts/ │        │   commands/  │          │   .agents/   │
-  │ instr/   │        │   agents/    │          │   AGENTS.md  │
-  │ copilot- │        │   GEMINI.md  │          │              │
-  │ instr.md │        │              │          │              │
-  └──────────┘        └──────────────┘          └──────────────┘
+        ┌─────────────────────┼──────────────────────────────┐
+        ▼                     ▼                              ▼
+  ┌──────────┐        ┌──────────────┐          ┌──────────────────┐
+  │ .github/ │        │   .gemini/   │          │   .agent/        │
+  │ prompts/ │        │   commands/  │          │   .agents/       │
+  │ instr/   │        │   agents/    │          │   AGENTS.md      │
+  │ copilot- │        │   GEMINI.md  │          │   (REF resolved) │
+  │ instr.md │        │   (REF       │          │                  │
+  │ (REF     │        │    resolved, │          │                  │
+  │  resolved)│        │   no -ref)   │          │                  │
+  └──────────┘        └──────────────┘          └──────────────────┘
    (Copilot)             (Gemini)            (Antigravity / Codex)
 ```
 
