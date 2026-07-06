@@ -1,0 +1,64 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\agent-skills-reminder.sh'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\guard-destructive.mjs'"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\guard-secrets.mjs'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\post-edit-feedback.mjs'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\intent-hint.sh'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash 'C:\\Users\\Admin\\Documents\\Repos\\UnderUndre\\repos\\under-ai-helpers\\.codex\\hooks\\session-checkpoint.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
