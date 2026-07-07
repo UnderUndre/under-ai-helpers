@@ -14,13 +14,13 @@ const claudeToCopilotRootInstructions: TransformerFn = (
 ): RenderedFile => {
   let body = source.body;
 
-  // Rewrite .claude/agents/X.md → .github/instructions/X.instructions.md
+  // Rewrite .claude/agents/X.md -> .github/instructions/X.instructions.md
   body = body.replace(
     /\.claude\/agents\/(\w+)\.md/g,
     ".github/instructions/$1.instructions.md",
   );
 
-  // Rewrite .claude/commands/X.md → .github/prompts/X.prompt.md
+  // Rewrite .claude/commands/X.md -> .github/prompts/X.prompt.md
   body = body.replace(
     /\.claude\/commands\/(\w+)\.md/g,
     ".github/prompts/$1.prompt.md",
