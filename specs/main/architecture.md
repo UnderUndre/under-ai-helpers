@@ -10,7 +10,7 @@
 A monorepo with two products under one roof:
 
 1. **`clai-helpers` CLI** (`packages/cli/`) — npm package that treats `.claude/` as the single source of truth and transpiles it to GitHub Copilot, Google Gemini, Antigravity, Codex Desktop, and other AI-tool formats.
-2. **AI configuration hub** — curated `.claude/` tree (commands, agents, skills) that ships with the CLI as a reference template via `github:UnderUndre/ai`.
+2. **AI configuration hub** — curated `.claude/` tree (commands, agents, skills) that ships with the CLI as a reference template via `github:UnderUndre/under-ai-helpers`.
 
 Write AI tool configuration **once** in Claude Code format. Sync everywhere else automatically. No manual duplication across `.github/prompts/`, `.gemini/commands/`, `.agent/workflows/`, `.agents/commands/`, etc.
 
@@ -19,7 +19,7 @@ Write AI tool configuration **once** in Claude Code format. Sync everywhere else
 Authoritative content. Edits start here.
 
 | Path | What lives here |
-|------|-----------------|
+| ------ | ----------------- |
 | `.claude/commands/` | 75+ Claude Code slash commands (`/speckit.*`, `/bump`, `/commit`, `/brainstorm`, ...). |
 | `.claude/agents/` | 27+ specialist agent definitions (`backend-specialist`, `debugger`, `orchestrator`, ...). YAML frontmatter + markdown body. |
 | `.claude/skills/` | 44+ reusable skill modules. Each = directory with `SKILL.md` + optional supporting files. Includes `knowledge-adaptation/` — agent-side adaptation skill for user-level knowledge level consumption. |
@@ -35,7 +35,7 @@ Authoritative content. Edits start here.
 Produced by `clai-helpers regen` (upstream) or `clai-helpers sync` (consumer). **Never edit by hand** (Constitution Principle I) — overwritten on next regeneration. Manual customization only inside `<!-- HELPERS:CUSTOM START/END -->` slots (Principle III).
 
 | Target | Path | Produced from | Transformer |
-|--------|------|---------------|-------------|
+| -------- | ------ | --------------- | ------------- |
 | Copilot | `.github/prompts/*.prompt.md` | `.claude/commands/*.md` | `claude-to-copilot-prompt` |
 | Copilot | `.github/instructions/<agent>.instructions.md` | `.claude/agents/*.md` | `claude-to-copilot-instructions` |
 | Copilot | `.github/copilot-instructions.md` | `CLAUDE.md` (with REF resolution → inlined Foundations) | `claude-to-copilot-root-instructions` |
@@ -57,7 +57,7 @@ Pipeline registry: `packages/cli/src/transformers/registry.ts`. Adding a new AI-
 The exception. Files Copilot consumes directly, never sourced from `.claude/`. Some are split into Foundation (always-loaded, canonical) + Reference (on-demand, heavy material).
 
 | Path | Purpose |
-|------|---------|
+| ------ | --------- |
 | `.github/instructions/coding/copilot-instructions.md` | **Coding Foundation** (≤30 lines, 5 bullets). Always-loaded distillation of Universal Coding Standards (v2.0.0). Standing Orders, Stop Conditions, Plumber's Loop, anti-patterns gist. |
 | `.github/instructions/coding/copilot-instructions-ref.md` | **Coding Reference** (on-demand). Full §1–§16 normative text, examples, anti-pattern detail. Referenced from Foundation, never always-loaded. |
 | `.github/instructions/coding/git/copilot-instructions.md` | Commit message rules. Enforced by `commitlint.config.js` + `.cz-config.cjs`. |
@@ -76,7 +76,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`. S
 `packages/cli/` — the npm-published artifact (`clai-helpers`).
 
 | Path | What |
-|------|------|
+| ------ | ------ |
 | `src/cli/` | Subcommands: `init`, `sync`, `status`, `diff`, `regen`, `doctor`, `add-target`, `remove-target`, `remove`, `recover`, `eject`, `list-transformers`, `migrate` (legacy → packs, feature 006), `presets` (apply permission/statusline presets, feature 006), `dialog` (backfill/renormalize/purge/doctor/internal-capture-event, feature 007). |
 | `src/transformers/` | 7+ transformers (`identity` + `claude-to-*`). Pluggable via `registry.ts`. Skill delivery is `identity` for targets with native SKILL.md support — see `docs/target-capabilities.md` (feature 006). |
 | `src/core/packs/` | Pack assembler: membership validation (existence, single ownership, cross-pack dependency DAG), pack tree + `marketplace.json` generation (feature 006). |
@@ -93,7 +93,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`. S
 `packages/underboard/` — standalone MCP tool server (`underboard`) for agent task board + shared semantic memory. Independently versioned from `clai-helpers`.
 
 | Path | What |
-|------|------|
+| ------ | ------ |
 | `src/server/` | MCP server (stdio + SSE transport), HTTP server (dashboard + health), tool registry. |
 | `src/storage/` | SQLite (better-sqlite3) stores: project, task, memory, event, sync_queue, tombstones. Migrations. FTS5 for lexical retrieval. Dialog spool tables (`dialog_quarantine_spool`, `dialog_outage_spool`, `dialog_tombstones`) added by feature 007. |
 | `src/memory-backend/` | Pluggable memory backend boundary: `MemoryBackend` interface, `HonchoBackend` (REST semantic), `LocalLexicalBackend` (FTS5 fallback), `BackendFactory`, reconciler. |
@@ -116,7 +116,7 @@ The exception. Files Copilot consumes directly, never sourced from `.claude/`. S
 ## 6. SpecKit Integration
 
 | Path | Purpose |
-|------|---------|
+| ------ | --------- |
 | `.specify/memory/constitution.md` | Governance: principles + workflow + amendments. Loaded by `/speckit.plan` Constitution Check gate. |
 | `.specify/scripts/{powershell,bash}/` | Scripts that `/speckit.*` commands invoke. PowerShell is source of truth on Windows; bash ports for *nix parity. |
 | `.specify/templates/` | Spec / plan / tasks / checklist templates. |

@@ -12,7 +12,7 @@ function makeEntry(overrides: Partial<FleetEntry> = {}): FleetEntry {
     shortName: "repo",
     defaultBranch: "main",
     pinnedRef: "v0.3.0",
-    pinnedSource: "github:UnderUndre/ai",
+    pinnedSource: "github:UnderUndre/under-ai-helpers",
     latestRef: "v0.4.0",
     hasDrift: true,
     lastSyncAt: "2026-01-15T10:30:00Z",

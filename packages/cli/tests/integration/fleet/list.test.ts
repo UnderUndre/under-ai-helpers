@@ -59,19 +59,19 @@ function createHappyPathMock() {
     if (u.includes("/contents/helpers-lock.json")) {
       if (u.includes("project-a")) {
         return mockResponse({
-          content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/ai" }),
+          content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/under-ai-helpers" }),
           encoding: "base64",
         });
       }
       if (u.includes("project-b")) {
         return mockResponse({
-          content: base64Encode({ ref: "v0.4.0", source: "github:UnderUndre/ai" }),
+          content: base64Encode({ ref: "v0.4.0", source: "github:UnderUndre/under-ai-helpers" }),
           encoding: "base64",
         });
       }
       if (u.includes("shared-lib")) {
         return mockResponse({
-          content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/ai" }),
+          content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/under-ai-helpers" }),
           encoding: "base64",
         });
       }

@@ -197,7 +197,7 @@ describe("github-api", () => {
 
   describe("readLockfile", () => {
     it("correctly decodes Base64 and parses JSON", async () => {
-      const lockfile = { ref: "v0.4.0", source: "github:UnderUndre/ai" };
+      const lockfile = { ref: "v0.4.0", source: "github:UnderUndre/under-ai-helpers" };
       const encoded = btoa(JSON.stringify(lockfile));
 
       fetchMock.mockResolvedValueOnce(
@@ -210,7 +210,7 @@ describe("github-api", () => {
       );
 
       const result = await readLockfile("owner", "repo", "main", AUTH, fetchMock);
-      expect(result).toEqual({ ref: "v0.4.0", source: "github:UnderUndre/ai" });
+      expect(result).toEqual({ ref: "v0.4.0", source: "github:UnderUndre/under-ai-helpers" });
     });
 
     it("throws lockfile/malformed on invalid JSON content", async () => {

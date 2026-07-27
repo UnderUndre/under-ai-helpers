@@ -44,7 +44,7 @@ npx underundre-clai-helpers status --strict
 
 ```bash
 # Только Claude (без Copilot/Gemini)
-npx underundre-clai-helpers init --source github:UnderUndre/ai --targets claude
+npx underundre-clai-helpers init --source github:UnderUndre/under-ai-helpers --targets claude
 
 # Добавить Copilot позже
 npx underundre-clai-helpers add-target copilot
@@ -108,7 +108,7 @@ npx underundre-clai-helpers hermes --background "prompt" # Фоновый реж
 ## Что синхронизируется
 
 | Источник (`.claude/`) | Copilot (`.github/`) | Gemini (`.gemini/`) | Antigravity (`.agent/`) |
-|---------------------|----------------------|---------------------|-------------------------|
+| --------------------- | ---------------------- | --------------------- | ------------------------- |
 | `commands/*.md` | `prompts/*.prompt.md` | `commands/*.toml` | `workflows/*.md` |
 | `agents/*.md` | `instructions/*.instructions.md` | `agents/*.md` | `agents/*.md` |
 | `CLAUDE.md` | `copilot-instructions.md` | `GEMINI.md` | `AGENTS.md` |
@@ -129,7 +129,7 @@ npx underundre-clai-helpers hermes --background "prompt" # Фоновый реж
 ## Структура проекта
 
 | Директория | Назначение |
-|-----------|-----------|
+| ----------- | ----------- |
 | `.claude/commands/` | Slash-команды Claude Code (75 шт.) |
 | `.claude/agents/` | Определения агентов-специалистов (27 шт.) |
 | `.claude/skills/` | Переиспользуемые модули скиллов (43 шт.) |

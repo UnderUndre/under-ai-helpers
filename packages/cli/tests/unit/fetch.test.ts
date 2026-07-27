@@ -36,7 +36,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
     );
     globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 
-    await fetchSource("github:UnderUndre/ai", "latest", undefined, { offline: true }).catch(
+    await fetchSource("github:UnderUndre/under-ai-helpers", "latest", undefined, { offline: true }).catch(
       () => {
         /* whatever happens downstream — not our concern */
       },
@@ -64,7 +64,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
     // Call fetchSource with ref "latest"; expect it to try releases/latest first.
     // It will then call giget (which will fail because we haven't mocked that),
     // but by the time it fails, we've already observed the API call we wanted.
-    await fetchSource("github:UnderUndre/ai", "latest").catch(() => {
+    await fetchSource("github:UnderUndre/under-ai-helpers", "latest").catch(() => {
       // giget will fail in a unit test environment without a real tarball; we
       // don't care about that failure — only that the resolver hit the right API.
     });
@@ -90,7 +90,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
       return new Response("{}", { status: 404 });
     }) as unknown as typeof globalThis.fetch;
 
-    await fetchSource("github:UnderUndre/ai", "latest").catch(() => {
+    await fetchSource("github:UnderUndre/under-ai-helpers", "latest").catch(() => {
       /* giget will fail — not our concern */
     });
 
@@ -109,7 +109,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
     );
     globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 
-    await fetchSource("github:UnderUndre/ai", "v1.2.3").catch(() => {
+    await fetchSource("github:UnderUndre/under-ai-helpers", "v1.2.3").catch(() => {
       /* giget failure expected in unit test */
     });
 

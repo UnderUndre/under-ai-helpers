@@ -42,7 +42,7 @@ export default defineCommand({
   args: {
     source: {
       type: "string",
-      default: "github:UnderUndre/ai",
+      default: "github:UnderUndre/under-ai-helpers",
       description: "Source repo URL",
     },
     version: {

@@ -44,7 +44,7 @@ npx underundre-clai-helpers status --strict
 
 ```bash
 # Only Claude (skip Copilot/Gemini)
-npx underundre-clai-helpers init --source github:UnderUndre/ai --targets claude
+npx underundre-clai-helpers init --source github:UnderUndre/under-ai-helpers --targets claude
 
 # Add Copilot later
 npx underundre-clai-helpers add-target copilot
@@ -124,7 +124,7 @@ See [packages/underboard/README.md](packages/underboard/README.md) for setup.
 ## What Gets Synced
 
 | Source (`.claude/`) | Copilot (`.github/`) | Gemini (`.gemini/`) | Antigravity (`.agent/`) |
-|---------------------|----------------------|---------------------|-------------------------|
+| --------------------- | ---------------------- | --------------------- | ------------------------- |
 | `commands/*.md` | `prompts/*.prompt.md` | `commands/*.toml` | `workflows/*.md` |
 | `agents/*.md` | `instructions/*.instructions.md` | `agents/*.md` | `agents/*.md` |
 | `CLAUDE.md` | `copilot-instructions.md` | `GEMINI.md` | `AGENTS.md` |
@@ -145,7 +145,7 @@ Your custom content here. Never overwritten by sync.
 ## Project Structure
 
 | Directory | Purpose |
-|-----------|---------|
+| ----------- | --------- |
 | `.claude/commands/` | Claude Code slash commands (75 commands) |
 | `.claude/agents/` | Specialist agent definitions (27 agents) |
 | `.claude/skills/` | Reusable skill modules (43 skills) |

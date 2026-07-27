@@ -25,7 +25,7 @@ clai-helpers fleet list [--filter <glob>] [--json] [--no-color] [--verbose]
 ### Flags
 
 | Flag | Short | Default | Effect |
-|------|-------|---------|--------|
+| ------ | ------- | --------- | -------- |
 | `--filter <glob>` | — | none | Filter the rendered rows; does NOT alter the configured scope |
 | `--json` | — | off | Emit `FleetEntry[]` as JSON to stdout instead of a human table |
 | `--no-color` | — | off | Disable ANSI color codes (also implied by `NO_COLOR=1` env) |
@@ -54,7 +54,7 @@ Scope: user (UnderUndre) + 1 org (myorg). Latest of clai-helpers: v0.5.0.
     "shortName": "myproject",
     "defaultBranch": "main",
     "pinnedRef": "v0.3.0",
-    "pinnedSource": "github:UnderUndre/ai",
+    "pinnedSource": "github:UnderUndre/under-ai-helpers",
     "latestRef": "v0.5.0",
     "hasDrift": true,
     "lastSyncAt": "2026-04-30T12:34:56Z",
@@ -67,7 +67,7 @@ Scope: user (UnderUndre) + 1 org (myorg). Latest of clai-helpers: v0.5.0.
 ### Exit codes
 
 | Code | Condition |
-|------|-----------|
+| ------ | ----------- |
 | 0 | List rendered cleanly (even if zero entries — printed empty result + "no projects found") |
 | 2 | Usage error (unknown flag, malformed `--filter`, no auth provided/discoverable) |
 | 3 | GitHub API rate-limited beyond retry budget AND ≥1 entry could not be fetched |
@@ -92,7 +92,7 @@ clai-helpers fleet sync
 ### Flags
 
 | Flag | Short | Default | Effect |
-|------|-------|---------|--------|
+| ------ | ------- | --------- | -------- |
 | `--all` | — | off | Select every active entry in scope (skips archived/disabled) |
 | `--repo <owner>/<repo>` | — | none | Explicit selection (repeatable: `--repo a/b --repo c/d`) |
 | `--filter <glob>` | — | none | Select entries matching pattern (e.g., `myorg/*`) |
@@ -139,7 +139,7 @@ Summary:
 ### Exit codes
 
 | Code | Condition |
-|------|-----------|
+| ------ | ----------- |
 | 0 | All selected entries succeeded or were no-op or were skipped |
 | 1 | At least one entry failed (`SyncOutcome === "failed"`) |
 | 2 | Usage error (conflicting selection flags, malformed `--repo`, etc.) |
@@ -168,6 +168,7 @@ If none resolve → exit 2 with: `auth required: set GH_TOKEN, run 'gh auth logi
 ## Stability promise
 
 Post-1.0:
+
 - New flags: SHALL be additive (no breaking).
 - Removed/renamed flags: MAJOR bump only (per Constitution Principle IV; in 0.x, MINOR signals breaking).
 - Output format changes: `--json` output is the stable machine-readable contract; human format may change between MINOR versions. Scripts MUST use `--json`.

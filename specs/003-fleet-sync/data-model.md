@@ -18,7 +18,7 @@ interface FleetEntry {
   defaultBranch: string;
   /** Pinned ref of clai-helpers (read from `helpers-lock.json.ref`). E.g. `v0.4.0`, `main`, sha. */
   pinnedRef: string;
-  /** Source URL field from `helpers-lock.json.source`. E.g. `github:UnderUndre/ai`. */
+  /** Source URL field from `helpers-lock.json.source`. E.g. `github:UnderUndre/under-ai-helpers`. */
   pinnedSource: string;
   /** Latest release tag of clai-helpers itself. Resolved once per session, shared across entries. */
   latestRef: string;
@@ -36,6 +36,7 @@ type RepoState = "active" | "archived" | "disabled" | "unreadable";
 ```
 
 **Validation**:
+
 - `fullName` matches `^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?/[a-zA-Z0-9._-]+$` (GitHub naming).
 - `defaultBranch` non-empty.
 - `pinnedRef` non-empty if `state === 'active'`; null/undefined for `'unreadable'`.
@@ -67,6 +68,7 @@ interface DiscoveryScope {
 ```
 
 **Validation**:
+
 - Each org name matches GitHub naming.
 - `filter` (if set) is a valid glob (compiled at load time; rejects malformed).
 
@@ -102,6 +104,7 @@ type SyncMode = "pr" | "push" | "patch";
 ```
 
 **Validation**:
+
 - `defaultSyncMode` ∈ `{"pr", "push", "patch"}`.
 - `discoveryConcurrency` ∈ [1, 20].
 - `patchOutputDir` is a path; created on first patch write if missing.
@@ -128,6 +131,7 @@ type SelectionSource =
 ```
 
 **Validation**:
+
 - `entries.length >= 1` to proceed (empty selection → exit cleanly per P2 acceptance #4).
 - Each entry must have `state === "active"` to be syncable; `archived`/`disabled` are filtered before selection materialises (or skipped at sync time with a clear reason if user explicitly named them).
 
@@ -164,6 +168,7 @@ type SyncOutcome = "succeeded" | "failed" | "skipped" | "no-op";
 ```
 
 **Outcomes**:
+
 - `succeeded`: bump applied per chosen mode; `refBefore`/`refAfter` populated.
 - `no-op`: pipeline produced no diff (already up-to-date); not counted as failure or skip in summary.
 - `skipped`: prerequisite not met (FR-006; e.g. branch protection blocker, archived repo); populated `reason` and `errorCode`.

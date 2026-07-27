@@ -70,7 +70,7 @@ function createBenchMock() {
     // Lockfile contents — return valid lockfile for every repo
     if (u.includes("/contents/helpers-lock.json")) {
       return mockResponse({
-        content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/ai" }),
+        content: base64Encode({ ref: "v0.3.0", source: "github:UnderUndre/under-ai-helpers" }),
         encoding: "base64",
       });
     }

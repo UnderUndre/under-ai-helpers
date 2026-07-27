@@ -10,7 +10,7 @@
 - `cd packages/underboard && npm run build` produces `dist/`.
 - Honcho Docker stack running (Postgres + pgvector + Redis + TEI) — same stack 008 depends on. Verify with `curl http://localhost:7e76f2a0.../health` (return `{"status":"ok"}`).
 - underboard service running: `cd packages/underboard && npm start`.
-- A test consumer repo with `.claude/` populated (run `npx clai-helpers init --source github:UnderUndre/ai` in a temp dir).
+- A test consumer repo with `.claude/` populated (run `npx clai-helpers init --source github:UnderUndre/under-ai-helpers` in a temp dir).
 
 ---
 
@@ -184,11 +184,13 @@ Set `size-cap-mb: 1`. Capture sessions until total raw size > 1 MB. Verify oldes
 ### Steps — recovery from Honcho
 
 1. Add a new rule to `presets/redaction/catalog_pii.yml`:
+
    ```yaml
    - id: myco-token
      pattern: 'MYCO-TOKEN-[a-f0-9]{32}'
      action: redact
    ```
+
 2. Bump catalog version.
 3. Run `helpers dialog-purge --rule-id myco-token`.
 4. Inspect output: should report 1 session affected.
@@ -259,7 +261,7 @@ A consumer with catalog version `2026.06.1` receives normalized records stamped 
 ## Acceptance traceability matrix
 
 | Scenario | User Story | FRs covered | SCs covered |
-|----------|-----------|-------------|-------------|
+| ---------- | ----------- | ------------- | ------------- |
 | 1 | US1 | FR-001, FR-002, FR-011, FR-014 | SC-001 |
 | 2 | US2 | FR-003, FR-004, FR-012 | SC-002, SC-006 |
 | 3 | US3 | FR-005, FR-011 | (idempotency) |
