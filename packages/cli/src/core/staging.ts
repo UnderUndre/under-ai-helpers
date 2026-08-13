@@ -35,9 +35,10 @@ export async function commitStaged(
   try {
     await rename(stagedPath, targetPath);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "EXDEV") {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code && ["EXDEV", "EPERM", "EACCES", "EBUSY", "EEXIST"].includes(code)) {
       await copyFile(stagedPath, targetPath);
-      await unlink(stagedPath);
+      await unlink(stagedPath).catch(() => {});
     } else {
       throw err;
     }

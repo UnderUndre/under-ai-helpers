@@ -165,9 +165,14 @@ function finalizeTranscript(
 
   mkdirSync(rawDir, { recursive: true });
 
-  // Atomic copy: write-temp + rename
+  // Atomic copy: write-temp + rename (fallback for Windows EPERM/EXDEV)
   copyFileSync(transcriptPath, tempDest);
-  renameSync(tempDest, dest);
+  try {
+    renameSync(tempDest, dest);
+  } catch {
+    copyFileSync(tempDest, dest);
+    try { unlinkSync(tempDest); } catch {}
+  }
 
   // Write meta sidecar (F6 fix: captured_at is stable across renormalize)
   const metaPath = `${dest}.meta.json`;
@@ -216,7 +221,12 @@ function promoteOrphans(cwd: string, promotionAgeMinutes: number): void {
         // Promote to clean raw/
         const cleanName = entry.replace(".partial", "");
         const dest = resolve(partialDir, "..", cleanName);
-        renameSync(abs, dest);
+        try {
+          renameSync(abs, dest);
+        } catch {
+          copyFileSync(abs, dest);
+          try { unlinkSync(abs); } catch {}
+        }
         console.log(`[dialog-capture] promoted orphan: ${cleanName}`);
       }
     } catch {}

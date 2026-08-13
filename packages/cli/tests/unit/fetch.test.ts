@@ -71,7 +71,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
 
     const releaseCalls = calls.filter((c) => c.includes("/releases/latest"));
     expect(releaseCalls.length).toBeGreaterThanOrEqual(1);
-    expect(releaseCalls[0]).toContain("UnderUndre/ai");
+    expect(releaseCalls[0]).toContain("UnderUndre/under-ai-helpers");
   });
 
   it("resolveLatestRef: falls back to default_branch when no releases exist", async () => {
@@ -84,7 +84,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
       if (u.includes("/releases/latest")) {
         return new Response("Not Found", { status: 404 });
       }
-      if (u.endsWith("/ai")) {
+      if (u.endsWith("/under-ai-helpers")) {
         return new Response(JSON.stringify({ default_branch: "main" }), { status: 200 });
       }
       return new Response("{}", { status: 404 });
@@ -96,7 +96,7 @@ describe("fetchSource — 'latest' sentinel resolution", () => {
 
     // Verify the fallback path was exercised.
     const releaseCalls = calls.filter((c) => c.includes("/releases/latest"));
-    const repoCalls = calls.filter((c) => c.endsWith("UnderUndre/ai"));
+    const repoCalls = calls.filter((c) => c.endsWith("UnderUndre/under-ai-helpers"));
     expect(releaseCalls.length).toBeGreaterThanOrEqual(1);
     expect(repoCalls.length).toBeGreaterThanOrEqual(1);
   });

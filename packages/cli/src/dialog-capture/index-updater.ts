@@ -5,7 +5,7 @@
  * Preserves hand-edited annotations on prior rows.
  */
 
-import { readFileSync, existsSync, writeFileSync, renameSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync, renameSync, copyFileSync, unlinkSync } from "node:fs";
 
 export interface IndexRow {
   date: string;
@@ -65,9 +65,14 @@ export function updateIndex(
   const tableBody = existingRows.join("\n") + "\n";
   const fullContent = header + tableHeader + tableBody;
 
-  // Atomic write: temp + rename
+  // Atomic write: temp + rename (with fallback for Windows EPERM/EXDEV)
   writeFileSync(tempPath, fullContent, "utf8");
-  renameSync(tempPath, indexPath);
+  try {
+    renameSync(tempPath, indexPath);
+  } catch {
+    copyFileSync(tempPath, indexPath);
+    try { unlinkSync(tempPath); } catch {}
+  }
 }
 
 function buildHeader(): string {
