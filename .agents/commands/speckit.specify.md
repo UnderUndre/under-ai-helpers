@@ -1,6 +1,9 @@
 ---
 description: Create or update the feature specification from a natural language feature description.
 handoffs: 
+  - label: Create/Update Business Plan
+    agent: speckit.business-plan
+    prompt: Create or update docs business plan from this feature
   - label: Build Technical Plan
     agent: speckit.plan
     prompt: Create a plan for the spec. I am building with...
@@ -27,6 +30,36 @@ You **MUST** consider the user input before proceeding (if not empty).
 The text the user typed after `/speckit.specify` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
 Given that feature description, do this:
+
+0. **Business plan gate & hook** (commercial / product features):
+
+   Detect:
+
+   ```text
+   PLAN_FILES = docs/**/*business-plan*.md ∪ docs/business-plan.md
+   OTHER_FEATURE_SPECS = specs/**/spec.md excluding specs/main/** and excluding the FEATURE_DIR we are about to write
+   IS_CHORE = feature is purely internal chore (typo, ci-only, deps bump) with zero user-facing/monetization impact — rare; default IS_CHORE=false
+   ```
+
+   **0a. CREATE gate (first commercial spec)**  
+   If `PLAN_FILES` is empty AND NOT `IS_CHORE`:
+
+   - **MUST** run the full `/speckit.business-plan` **CREATE** workflow **before** writing `spec.md` (same session is OK).  
+   - Use `.specify/templates/business-plan-template.md`.  
+   - Write `docs/business-plan.md` or `docs/<product>-business-plan.md`.  
+   - If user refused a plan explicitly (`--no-business-plan` in args): record `FEATURE_DIR/business-plan-waiver.md` with reason and continue — do not silent-skip.  
+   - Spec MUST NOT invent pricing/ICP that contradicts the new plan; align or [NEEDS CLARIFICATION].
+
+   **0b. UPDATE hook (second+ feature)**  
+   If `PLAN_FILES` is non-empty AND (`OTHER_FEATURE_SPECS` ≥ 1 OR existing plan version ≥ 1) AND NOT `IS_CHORE`:
+
+   - After `spec.md` is written and quality validation passes (step 6), **MUST** run `/speckit.business-plan` **UPDATE** against the touched plan file(s) when the feature changes any of: ICP, SKUs, pricing, packaging, focus/phase gates, legal/payment rails, unit econ, go-to-market, or brand isolation.  
+   - If none of those change (pure technical internals): skip update but note `Business plan: unchanged (no commercial delta)` in the completion report.  
+   - Prefer **one** plan update after clarify if user will immediately `/speckit.clarify` — but if specify is standalone, update at end of specify.  
+   - Never create a second conflicting plan file for the same brand without `--create`.
+
+   **0c. Read plan as constraint**  
+   If `PLAN_FILES` exist, **read them before** filling FR/Success Criteria so the spec does not reopen frozen SKUs, dual-front bans, or price floors.
 
 1. **Generate a concise short name** (2-4 words) for the branch:
    - Analyze the feature description and extract the most meaningful keywords
@@ -206,7 +239,9 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
+7. **Business plan UPDATE hook** (if step 0b applies and commercial delta exists): execute `/speckit.business-plan` update now (or explicitly defer to post-clarify in the report if user is continuing straight into clarify — then `/speckit.clarify` or the user must run update before `/speckit.plan`).
+
+8. Report completion with branch name, spec file path, checklist results, **business plan action** (`created path` | `updated path vX→vY` | `unchanged` | `waived`), and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
 
 **NOTE:** The script creates and checks out the new branch and initializes the spec file before writing.
 

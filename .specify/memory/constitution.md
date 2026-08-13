@@ -61,13 +61,28 @@ Reviewers identify themselves by tool — `claude`, `codex`, `antigravity`, `gem
 
 ### VII. Artifact Versioning
 
-Every pipeline stage that mutates a feature artifact (specify, clarify, plan, tasks, review) MUST tag the commit via `.specify/scripts/{bash,powershell}/snapshot-stage.{sh,ps1}` using the convention `<stage>/<slug>/v<N>`.
+Every pipeline stage that mutates a feature artifact (specify, clarify, plan, tasks, review, **bizplan**) MUST tag the commit via `.specify/scripts/{bash,powershell}/snapshot-stage.{sh,ps1}` using the convention `<stage>/<slug>/v<N>`.
 
 - Tags are the **only** historical record. **No parallel `.history/` files** — git is the history. Duplicating into `specs/<slug>/.history/` is an anti-pattern: it drifts and bloats the tree.
 - `/speckit.diff <slug>` reads tags to compare iterations without speculative file copies.
 - `/speckit.retrospective` reads `tasks/<slug>/v1` → HEAD to bound the implementation lifecycle and surface lessons-learned.
 - The snapshot script is **idempotent** via `--points-at HEAD` guard — re-running a speckit command on the same commit reuses the existing tag instead of polluting the namespace.
 - Reviewers (`/speckit.review`) only need ONE of them to call snapshot — the idempotency guard ensures parallel reviewers don't duplicate.
+- Stage name **`bizplan`** is reserved for `/speckit.business-plan` create/update commits.
+
+### VII-B. Business Plan Stage (Commercial Canon)
+
+Product/agency work MUST keep a living business plan under `docs/**/*business-plan*.md` (template: `.specify/templates/business-plan-template.md`).
+
+1. **First commercial feature:** `/speckit.business-plan` **CREATE** (or specify step 0 CREATE gate) **before** or as hard prerequisite to the first `spec.md`.  
+2. **Second+ features:** `/speckit.business-plan` **UPDATE** when the feature changes ICP, pricing, packaging, focus gates, legal/payment rails, or unit economics — normally after specify/clarify, before plan hardens.  
+3. Plans MUST include honest traction, stress unit economics, explicit Phase focus laws, and a **GTM spine** (ICP, offer ladder, Phase A channels, CAC, convert KPIs, sales artifacts, kill-criteria). “Production Ready” at zero revenue is a defect. Full sales playbooks/content calendars are optional satellites (`docs/sales-playbook.md`, etc.), not day-one canon.  
+4. Technical `/speckit.plan` MUST NOT silently violate active business-plan gates; conflict → update plan with approval or narrow scope.  
+5. Chore-only features may waive via `specs/<slug>/business-plan-waiver.md` + reason.  
+6. **Review hybrid (not a second Principle VI):**  
+   - **(A)** Stress Pass inside `/speckit.business-plan` on every write;  
+   - **(B)** Commercial-drift lens inside `/speckit.analyze` + `/speckit.review` (plan vs feature artifacts);  
+   - **(C)** External `/speckit.business-plan-review` → `docs/reviews/business-plan-<provider>.md` on **CREATE** (recommended) and **major** bumps (required by process). Layer C alone does **not** gate `/speckit.implement`.
 
 ### VIII. Self-Maintaining Knowledge
 
@@ -156,10 +171,11 @@ This file (the constitution) is loaded at the Constitution Check gate of `/speck
 4. **Complexity must be justified.** Every new agent, transformer, target, or skill adds load to every downstream session. A change that doesn't earn its weight is rejected.
 5. **Anti-sycophancy applies to review of this file too.** If a principle above is wrong for the project, say so and propose an amendment. Don't quietly ignore it.
 
-**Version**: 1.5.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-05-25
+**Version**: 1.6.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-08-13
 
 ### Changelog
 
+- **1.6.0** (2026-08-13) — Added Principle **VII-B: Business Plan Stage**. `/speckit.business-plan` CREATE before first commercial `spec.md`; UPDATE on later features with commercial delta; stage tag `bizplan`; technical plan must not silently violate business gates. Template: `.specify/templates/business-plan-template.md`. Wired into `speckit.start|specify|full-spec|clarify|plan`. Hybrid review (stress + analyze/review drift lens + `/speckit.business-plan-review` on create/major). GTM spine mandatory in plan; full marketing playbook optional satellite.
 - **1.5.0** (2026-05-25) — Added Principle IX: Two-Phase Review Flow. Formalizes `specs/<slug>` planning branch → `<slug>` implementation branch pattern with hotfix carve-out and drift policy. Breaking change from `feature/<N>-<slug>` convention. Companion to 004-devx-bundle-v1.
 - **1.4.0** (2026-05-06) — Added Principle VIII: Self-Maintaining Knowledge. Documents the May 2026 self-maintaining workflow infrastructure (Intent Routing + `/dispatch` + 3 hooks + `/learn` + `/improve` + `specs/main/`). NOT NON-NEGOTIABLE — fuzzy signals only, no `/speckit.implement` block. Hybrid enforcement: soft baseline transpiles everywhere; CC ratchet (hooks) lives upstream-only. Companion build-out: brainstorm Option B implemented over Steps 1-7.
 - **1.3.0** (2026-05-06) — Moved "Technical Constraints" section out of constitution to [`specs/main/requirements.md`](../../specs/main/requirements.md) §2.1 as part of project-doc consolidation. Constitution now governs **principles only**; concrete tech-stack constraints live with requirements. No principle changes; no behavioral diff for `/speckit.*` commands.

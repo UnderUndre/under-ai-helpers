@@ -79,6 +79,12 @@ Load only the minimal necessary context from each artifact:
 
 - Load `.specify/memory/constitution.md` for principle validation
 
+**From business plan (Principle VII-B — commercial features):**
+
+- Load any `docs/**/*business-plan*.md` and `docs/business-plan.md` if present
+- Extract: Phase A hero SKU(s), price floors, focus/hard laws, frozen brands/modules, CAC/cold-spend gates, brand isolation rules, GTM spine constraints
+- If **no** plan files and feature is user-facing/monetized (not pure chore): flag under pass **H** (see below) — severity HIGH unless `FEATURE_DIR/business-plan-waiver.md` exists
+
 ### 3. Build Semantic Models
 
 Create internal representations (do not include raw artifacts in output):
@@ -140,13 +146,31 @@ Focus on high-signal findings. Limit to 50 findings total; aggregate remainder i
 - `[SEC]` and `[E2E]` tasks must depend on implementation tasks (not vice versa) — flag inverted dependencies as HIGH
 - Shared file conflicts: if 2+ tasks from different agents reference the same file path without a common `[SETUP]` dependency — flag as CRITICAL (race condition risk)
 
+#### H. Commercial drift vs business plan (GTM / money path)
+
+Read-only check against loaded business plan(s). **Skip** only if `business-plan-waiver.md` exists for this feature **or** feature is explicitly chore-only (no user-facing/monetization).
+
+Flag when `spec.md` / `plan.md` / `tasks.md`:
+
+| Drift | Typical severity |
+| :--- | :--- |
+| Implements or tasks a **SKU / price / offer** that contradicts plan floors or killed SKUs | **CRITICAL** |
+| Builds work **forbidden by focus/hard law** (e.g. secondary brand eng while frozen; Lab while gated; dual-front) | **CRITICAL** |
+| Opens **paid cold CAC / ads** tasks while plan says $0 cold until gate | **HIGH** |
+| Ignores **brand isolation** (crypto/polity copy in sterile B2B surface, or reverse) | **HIGH** |
+| Adds monetization surface with **no** plan update path and plan file missing | **HIGH** |
+| GTM/sales artifacts required by plan (sample pack, SOW knives) never appear in tasks though feature is the hero offer | **MEDIUM** |
+| Terminology: plan hero name vs spec product name drift without alias | **MEDIUM** |
+
+Do **not** re-litigate full unit-econ tables here — that is `/speckit.business-plan` Stress Pass + optional external biz review. Here only **consistency / drift**.
+
 ### 5. Severity Assignment
 
 Use this heuristic to prioritize findings:
 
-- **CRITICAL**: Violates constitution MUST, missing core spec artifact, or requirement with zero coverage that blocks baseline functionality
-- **HIGH**: Duplicate or conflicting requirement, ambiguous security/performance attribute, untestable acceptance criterion
-- **MEDIUM**: Terminology drift, missing non-functional task coverage, underspecified edge case
+- **CRITICAL**: Violates constitution MUST, missing core spec artifact, requirement with zero coverage that blocks baseline functionality, or **hard commercial gate breach** (focus law / killed SKU / price floor contradiction)
+- **HIGH**: Duplicate or conflicting requirement, ambiguous security/performance attribute, untestable acceptance criterion, **commercial drift** (cold CAC, brand isolation, missing plan on monetized feature)
+- **MEDIUM**: Terminology drift, missing non-functional task coverage, underspecified edge case, missing GTM artifacts for hero offer
 - **LOW**: Style/wording improvements, minor redundancy not affecting execution order
 
 ### 6. Compute Verdict
@@ -192,6 +216,13 @@ Report structure:
 ## Constitution Alignment Issues
 
 (List principle name + violation; empty section is fine.)
+
+## Commercial / Business Plan Alignment
+
+- Plan files loaded: [paths | none]
+- Focus/hard laws checked: [summary | n/a]
+- Findings: [none | see table IDs H*]
+- If none and commercial feature: state explicitly "No commercial drift detected" or "No plan — HIGH/waiver"
 
 ## Unmapped Tasks
 

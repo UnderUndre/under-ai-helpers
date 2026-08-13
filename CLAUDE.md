@@ -52,7 +52,9 @@ Full table (key skills + cross-domain escalation): [`.github/instructions/coding
 | "brainstorm X", "обкашляю X" | `/brainstorm X` |
 | "find holes", "найди дыры", "devil's advocate" | `/questions_ideas` |
 | "fix bug", "не работает", "сломалось" | spawn `debugger` + `systematic-debugging` |
-| "implement X" (>3 files OR new domain) | `/speckit.start → .full-spec → .full-plan → .implement` |
+| "implement X" (>3 files OR new domain) | `/speckit.start` → (first commercial: `/speckit.business-plan`) → `.full-spec` → `.full-plan` → `.implement` |
+| "business plan", "юнит-экономика", "go-to-market plan" | `/speckit.business-plan` |
+| "review business plan", "аудит бизнес-плана" | `/speckit.business-plan-review` |
 | "implement X" (≤3 files, in-domain) | identify domain → spawn agent → Plumber's Loop |
 | "review", "code review", "ревью" | spawn `code-reviewer` OR `/code_review` |
 | "tests failing", "тесты упали" | `/fix-tests` |
@@ -112,7 +114,10 @@ See [`.claude/skills/semver-versioning/SKILL.md`](.claude/skills/semver-versioni
 
 ### SpecKit (feature development pipeline)
 
-Полный список команд — `.claude/commands/speckit.*`. Канон: `/speckit.specify → .clarify → .plan → .tasks → .analyze → .review` (×2 внешних ревьюера) `→ .implement`. Combo: `.full-spec`, `.full-plan`. Инспекция: `.status`, `.diff`, `.scope`, `.retrospective`.
+Полный список команд — `.claude/commands/speckit.*`. Канон:  
+**First commercial feature:** `/speckit.business-plan` (create) → `/speckit.start` → `/speckit.specify` (creates plan if missing) → `.clarify` → `.plan` → `.tasks` → `.analyze` → `.review` (×2) → `.implement`.  
+**Second+ features:** `/speckit.start` → `.specify` → `.clarify` → **`/speckit.business-plan` update** (if commercial delta) → `.plan` → …  
+Combo: `.full-spec` (bizplan hooks inlined), `.full-plan`. Инспекция: `.status`, `.diff`, `.scope`, `.retrospective`.
 
 **Constitution gates** (`.specify/memory/constitution.md` v1.5.0): **Principle VI** (Cross-AI Review, NON-NEGOTIABLE) — `/speckit.implement` blocks until `analyze.md` PASS + ≥2 external reviewer PASS; override `--override-gate "<reason>"` (logged). **Principle VII** (Artifact Versioning) — every stage tags `<stage>/<slug>/v<N>`; git is the history, no `.history/` files.
 

@@ -62,6 +62,8 @@ Read in this order (skip if missing):
 - `FEATURE_DIR/quickstart.md` (optional)
 - `FEATURE_DIR/research.md` (optional)
 - `.specify/memory/constitution.md` (REQUIRED — review uses constitution as one of its lenses)
+- `docs/**/*business-plan*.md` and `docs/business-plan.md` (REQUIRED for commercial/user-facing features — Principle VII-B; if missing without `FEATURE_DIR/business-plan-waiver.md`, flag HIGH/CRITICAL under lens J)
+- Optional GTM satellites if linked from plan: `docs/sales-playbook.md`, `docs/**/gtm*.md` (read-only; do not require)
 
 ### 3. Review Dimensions
 
@@ -100,13 +102,24 @@ Re-read `spec.md` as a non-technical stakeholder (product manager, designer, sup
 #### I. Constitution alignment
 Cross-check every plan/task element against principles in `.specify/memory/constitution.md`. Flag any violation as CRITICAL.
 
+#### J. Commercial / GTM drift vs business plan
+Probe money path and focus — **not** a full redo of unit-econ stress (that is `/speckit.business-plan` + optional external biz review).
+
+- Does the feature **reopen a killed SKU**, undercut a **price floor**, or ignore **Phase A sole-hero / hard law**?
+- Do tasks spend calendar on a **frozen brand/module** (Lab, secondary product, dual-front)?
+- Cold paid acquisition, public Lab, or polity/crypto bleed into sterile B2B (or reverse) against plan isolation?
+- Hero commercial feature with **no** business plan and no waiver?
+- Plan GTM spine requires sales artifacts (sample pack, SOW timebox, prepay) but implementation plan pretends unlimited discovery labor?
+
+Severity: hard-law / killed-SKU / missing plan on monetized work → **CRITICAL** or **HIGH**; artifact gaps → **MEDIUM**.
+
 ### 4. Severity Heuristic
 
 | Severity | Meaning |
 |---|---|
-| **CRITICAL** | Constitution violation, missing core artifact, security hole, data-loss path, or design flaw that blocks baseline functionality |
-| **HIGH** | Significant gap (missing edge case in main flow, weak invariant, ambiguous requirement that will need rework mid-implementation) |
-| **MEDIUM** | Quality concern (missing minor edge case, unclear naming, undocumented assumption) |
+| **CRITICAL** | Constitution violation, missing core artifact, security hole, data-loss path, design flaw that blocks baseline functionality, or **hard commercial gate breach** vs business plan |
+| **HIGH** | Significant gap (missing edge case in main flow, weak invariant, ambiguous requirement that will need rework mid-implementation), **commercial drift** (CAC/brand/focus) |
+| **MEDIUM** | Quality concern (missing minor edge case, unclear naming, undocumented assumption, missing GTM artifact for hero offer) |
 | **LOW** | Polish (terminology, formatting, suggestion that improves but doesn't block) |
 
 ### 5. Compute Verdict
@@ -128,7 +141,7 @@ Write to `FEATURE_DIR/reviews/<provider>.md` (create the `reviews/` directory if
 **Reviewer**: <provider>
 **Reviewed at**: <ISO 8601 timestamp>
 **Commit**: <git rev-parse HEAD output>
-**Artifacts reviewed**: spec.md, plan.md, tasks.md[, data-model.md, contracts/, …]
+**Artifacts reviewed**: spec.md, plan.md, tasks.md[, data-model.md, contracts/, business-plan(s), …]
 
 ## Summary
 
@@ -139,8 +152,14 @@ Write to `FEATURE_DIR/reviews/<provider>.md` (create the `reviews/` directory if
 | ID | Severity | Area | Finding | Recommendation |
 |---|---|---|---|---|
 | F1 | CRITICAL | Security | <specific finding with file:line where possible> | <concrete action> |
-| F2 | HIGH | Edge case | … | … |
+| F2 | HIGH | Commercial/GTM | … | … |
 | … | … | … | … | … |
+
+## Commercial / business plan notes
+
+- Plans loaded: [paths | none | waived]
+- Focus laws / SKU floors checked: [one line]
+- Drift: [none | see findings]
 
 ## Alternative approaches considered
 

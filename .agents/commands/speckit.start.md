@@ -20,6 +20,27 @@ Many SpecKit pipelines run in parallel (multiple features in flight, multi-AI re
 
 `/speckit.start` is the **canonical entry point** for a feature. It creates the `specs/<slug>` planning branch and worktree **before** any LLM work begins, so the rest of the pipeline can assume clean state.
 
+### Business plan gate (commercial products)
+
+Before celebrating “feature started”, check for a living business plan:
+
+```text
+PLAN_EXISTS = any file matching docs/**/*business-plan*.md OR docs/business-plan.md
+FEATURE_SPECS = count specs/**/spec.md excluding specs/main/**
+```
+
+- If **not** `PLAN_EXISTS` and the feature is product/agency/monetized (not pure chore/docs):  
+  **WARN** in the completion report:
+
+  ```
+  ⚠ No docs/*business-plan*.md found.
+    Before /speckit.specify on the first commercial feature, run:
+      /speckit.business-plan <product context>
+    Or pass context into /speckit.specify — it will CREATE the plan as a gate.
+  ```
+
+- Do **not** block worktree creation (isolation still wins). Blocking hard-gate lives in `/speckit.specify`.
+
 Per Principle IX (Two-Phase Review Flow), this creates the **planning branch** (`specs/<slug>`). The **implementation branch** (`<slug>`) is created later by `/speckit.implement` after the planning PR merges.
 
 ## Operating Constraints
@@ -99,8 +120,12 @@ Print:
 
 Next steps:
   cd .claude/worktrees/cross-ai-review
+  # If first commercial feature and no plan yet:
+  /speckit.business-plan <product context>
   /speckit.specify <description>
 ```
+
+Include business-plan WARN from the gate section when `PLAN_EXISTS` is false.
 
 ## Coordination with `/speckit.specify`
 

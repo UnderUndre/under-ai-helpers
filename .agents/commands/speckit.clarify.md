@@ -195,3 +195,11 @@ After clarifications are encoded back into `spec.md` (committed or staged), tag 
 ```
 
 Where `<slug>` = the feature directory slug (e.g., `001-orchestrator`). Tag (e.g., `clarify/001-orchestrator/v1`) MUST be reported back. Idempotent. Skips with warning if not in a git repo.
+
+## Business plan hook
+
+If clarifications changed ICP, pricing, packaging, focus gates, legal/payment rails, or unit economics:
+
+1. Run or queue `/speckit.business-plan` **UPDATE** before suggesting `/speckit.plan`.  
+2. If no commercial delta → note `Business plan: unchanged` in the completion report.  
+3. Spec-only chores: skip.
